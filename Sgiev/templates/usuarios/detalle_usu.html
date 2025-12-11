@@ -1,0 +1,198 @@
+{% extends 'usuarios/base_usuarios.html' %}
+{% block title %}Mi Perfil - {{ usuario_detalle.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="font-weight-bold">
+        <i class="icon ion-md-person"></i> Mi Perfil
+      </h2>
+    </div>
+
+  </div>
+
+  <div class="row">
+    <!-- Columna Izquierda -->
+    <div class="col-lg-4">
+      <!-- Card de Perfil -->
+      <div class="card mb-4">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center"
+                 style="width: 120px; height: 120px">
+              <h1 class="text-white mb-0">
+                {{ usuario_detalle.p_nombre.0 }}{{ usuario_detalle.p_apellido.0 }}
+              </h1>
+            </div>
+          </div>
+          <h4 class="mb-2">{{ usuario_detalle.nombre_completo }}</h4>
+          <p class="text-muted mb-3">{{ usuario_detalle.correo }}</p>
+
+          <span class="badge badge-lg
+            {% if usuario_detalle.tipo_usu == 'administrador' %}
+              badge-danger
+            {% else %}
+              badge-warning
+            {% endif %}">
+            {{ usuario_detalle.tipo_usu|title }}
+          </span>
+
+          <span class="badge badge-lg
+            {% if usuario_detalle.activo == 1 %}
+              badge-success
+            {% else %}
+              badge-secondary
+            {% endif %}">
+            {% if usuario_detalle.activo == 1 %} Activo {% else %} Inactivo {% endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Información Rápida -->
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="icon ion-md-information-circle"></i> Información Rápida
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <small class="text-muted">Fecha de Registro</small>
+            <p class="mb-0">{{ usuario_detalle.fecha_registro|date:"d/m/Y H:i" }}</p>
+          </div>
+
+          <div class="mb-3">
+            <small class="text-muted">Fecha de Nacimiento</small>
+            <p class="mb-0">{{ usuario_detalle.fecha_nacimiento|date:"d/m/Y" }}</p>
+          </div>
+
+          <div>
+            <small class="text-muted">Teléfono</small>
+            <p class="mb-0">{{ usuario_detalle.telefono }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna Derecha -->
+    <div class="col-lg-8">
+
+      <!-- Información Personal -->
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="icon ion-md-person"></i> Información Personal</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Número de Identificación</small>
+              <p class="font-weight-bold">{{ usuario_detalle.num_identificacion }}</p>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Tipo de Usuario</small>
+              <p class="font-weight-bold">{{ usuario_detalle.tipo_usu|title }}</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Primer Nombre</small>
+              <p class="font-weight-bold">{{ usuario_detalle.p_nombre }}</p>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Segundo Nombre</small>
+              <p class="font-weight-bold">{{ usuario_detalle.s_nombre|default:"-" }}</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Primer Apellido</small>
+              <p class="font-weight-bold">{{ usuario_detalle.p_apellido }}</p>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Segundo Apellido</small>
+              <p class="font-weight-bold">{{ usuario_detalle.s_apellido|default:"-" }}</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Fecha de Nacimiento</small>
+              <p class="font-weight-bold">{{ usuario_detalle.fecha_nacimiento|date:"d/m/Y" }}</p>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Estado</small>
+              <p>
+                {% if usuario_detalle.activo == 1 %}
+                  <span class="badge badge-success">Activo</span>
+                {% else %}
+                  <span class="badge badge-secondary">Inactivo</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Información de Contacto -->
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="icon ion-md-mail"></i> Información de Contacto</h5>
+        </div>
+        <div class="card-body">
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Correo Electrónico</small>
+              <p class="font-weight-bold"><a href="mailto:{{ usuario_detalle.correo }}">{{ usuario_detalle.correo }}</a></p>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Teléfono</small>
+              <p class="font-weight-bold"><a href="tel:{{ usuario_detalle.telefono }}">{{ usuario_detalle.telefono }}</a></p>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <small class="text-muted">Dirección</small>
+            <p class="font-weight-bold">{{ usuario_detalle.direccion }}</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Información Laboral -->
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="icon ion-md-briefcase"></i> Información Laboral</h5>
+        </div>
+        <div class="card-body">
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Salario</small>
+              <p class="font-weight-bold">${{ usuario_detalle.salario|floatformat:0 }}</p>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Fecha de Registro</small>
+              <p class="font-weight-bold">{{ usuario_detalle.fecha_registro|date:"d/m/Y H:i" }}</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

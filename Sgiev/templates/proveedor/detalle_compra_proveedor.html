@@ -1,0 +1,130 @@
+{% extends "proveedor/base_prov.html" %}
+
+{% block title %}Detalle de Compra #{{ compra.numero_factura_compra }} - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-md-7">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-document"></i> Detalle de Compra #{{ compra.numero_factura_compra }}
+            </h2>
+            <p class="text-muted">Información detallada de la compra registrada</p>
+        </div>
+
+        <div class="col-md-5 d-flex justify-content-end align-items-center">
+            <a href="{% url 'listar_compras' %}" class="btn btn-secondary btn-compact">
+                <i class="icon ion-md-arrow-back"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light font-weight-bold">
+            <i class="icon ion-md-information-circle-outline"></i> Información General
+        </div>
+
+        <div class="card-body">
+            
+            {% if compra.estado_compra == 'pendiente' %}
+                <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                    <p class="mb-0 font-weight-bold">
+                        Esta compra está **PENDIENTE** de recepción. 
+                        El stock no ha sido actualizado.
+                    </p>
+                    <form method="post" action="{% url 'recibir_compra_pendiente' compra_id=compra.id %}" onsubmit="return confirm('¿Está seguro de que desea marcar esta compra como RECIBIDA? Esto procederá a actualizar su inventario (stock y movimientos).');" class="ml-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="icon ion-md-checkmark-circle"></i> Marcar como Recibida y Actualizar Stock
+                        </button>
+                    </form>
+                </div>
+                <hr>
+            {% endif %}
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <p><strong>Fecha de Compra:</strong> {{ compra.fecha_compra|date:"Y-m-d H:i" }}</p>
+
+                    <p><strong>Estado:</strong>
+                        <span class="badge 
+                            {% if compra.estado_compra == 'recibida' %}badge-success
+                            {% elif compra.estado_compra == 'cancelada' %}badge-danger
+                            {% else %}badge-warning
+                            {% endif %}
+                        ">
+                            {{ compra.get_estado_compra_display }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <p><strong>Registrado por:</strong> {{ compra.usuarios_id_usuario.nombre_completo }}</p>
+                    <p><strong>Proveedor:</strong> {{ proveedor.nombre_proveedor|default:"N/A" }}</p>
+                </div>
+
+                <div class="col-md-4 mb-3 text-right">
+                    <p><strong>Subtotal:</strong> ${{ compra.subtotal_compra|floatformat:2 }}</p>
+                    <p><strong>IVA:</strong> ${{ compra.iva_compra|floatformat:2 }}</p>
+                    <h4 class="text-primary"><strong>Total:</strong> ${{ compra.total_compra|floatformat:2 }}</h4>
+                </div>
+
+            </div>
+
+            <hr>
+
+            <p><strong>Observaciones:</strong> {{ compra.observaciones_compra|default:"Sin observaciones." }}</p>
+
+        </div>
+    </div>
+
+    <h4 class="mb-3 font-weight-bold text-success">
+        <i class="icon ion-md-cube"></i> Detalles de la Compra
+    </h4>
+
+    <div class="card">
+        <div class="card-body p-0">
+
+            {% if detalles %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Lote</th>
+                            <th>Vencimiento</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for d in detalles %}
+                        <tr>
+                            <td>{{ d.producto_idproducto.nombre_producto }}</td>
+                            <td>{{ d.cantidad }}</td>
+                            <td>${{ d.precio_compra_unitario|floatformat:2 }}</td>
+                            <td>{{ d.lote }}</td>
+                            <td>{{ d.fecha_vencimiento|date:"Y-m-d"|default:"N/A" }}</td>
+                            <td>${{ d.subtotal_linea_compra|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            {% else %}
+            <div class="text-center p-5">
+                <i class="icon ion-md-alert" style="font-size:3rem;color:#ccc;"></i>
+                <p class="text-muted mt-2">No se encontraron detalles asociados a esta compra.</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'envios/base_envios.html' %}
+
+{% block title %}{{ titulo }} - Romar Natural{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-bicycle"></i> {{ titulo }}
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'envios_listar' %}">Envíos</a></li>
+                    <li class="breadcrumb-item active">{{ titulo }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-document"></i> Información del Envío</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <h6 class="border-bottom pb-2 mb-3">Datos Generales</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.venta_idfactura.label }} *</label>
+                                {{ form.venta_idfactura }}
+                                {% if form.venta_idfactura.errors %}
+                                    <div class="text-danger small">{{ form.venta_idfactura.errors }}</div>
+                                {% endif %}
+                                
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.fk_mensajeria.label }} *</label>
+                                {{ form.fk_mensajeria }}
+                                {% if form.fk_mensajeria.errors %}
+                                    <div class="text-danger small">{{ form.fk_mensajeria.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Fechas y Estado</h6>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label>{{ form.estado_envio.label }} *</label>
+                                {{ form.estado_envio }}
+                                {% if form.estado_envio.errors %}
+                                    <div class="text-danger small">{{ form.estado_envio.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ form.fecha_envio.label }} *</label>
+                                {{ form.fecha_envio }}
+                                {% if form.fecha_envio.errors %}
+                                    <div class="text-danger small">{{ form.fecha_envio.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ form.fecha_entrega.label }} *</label>
+                                {{ form.fecha_entrega }}
+                                {% if form.fecha_entrega.errors %}
+                                    <div class="text-danger small">{{ form.fecha_entrega.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Direcciones</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.direccion_salida.label }} *</label>
+                                {{ form.direccion_salida }}
+                                {% if form.direccion_salida.errors %}
+                                    <div class="text-danger small">{{ form.direccion_salida.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.direccion_envio.label }} *</label>
+                                {{ form.direccion_envio }}
+                                {% if form.direccion_envio.errors %}
+                                    <div class="text-danger small">{{ form.direccion_envio.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Observaciones</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.observaciones.label }}</label>
+                                {{ form.observaciones }}
+                                {% if form.observaciones.errors %}
+                                    <div class="text-danger small">{{ form.observaciones.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.novedades.label }}</label>
+                                {{ form.novedades }}
+                                {% if form.novedades.errors %}
+                                    <div class="text-danger small">{{ form.novedades.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="icon ion-md-checkmark"></i> Guardar Envío
+                        </button>
+                        <a href="{% url 'envios_listar' %}" class="btn btn-secondary">
+                            <i class="icon ion-md-close"></i> Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar Select2 con búsqueda
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%',
+            placeholder: 'Seleccione una opción',
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return "No se encontraron resultados";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends 'ventas/base_ventas.html' %}
+
+{% block title %}Nueva Venta - Romar Natural{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+
+<style>
+    .carrito-item {
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px 0;
+    }
+    .carrito-item:last-child {
+        border-bottom: none;
+    }
+    .resumen-venta {
+        position: sticky;
+        top: 20px;
+    }
+    .total-general {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary);
+    }
+    .select2-container--bootstrap4 .select2-selection {
+        height: calc(1.5em + .75rem + 2px) !important;
+    }
+    #abono-info {
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-cart"></i> Nueva Venta
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'ventas_listar' %}">Ventas</a></li>
+                    <li class="breadcrumb-item active">Nueva</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna izquierda: Agregar productos -->
+        <div class="col-lg-8">
+            <!-- Formulario agregar producto -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-add"></i> Agregar Productos</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-8 form-group">
+                                <label>{{ producto_form.producto.label }}</label>
+                                {{ producto_form.producto }}
+                                {% if producto_form.producto.errors %}
+                                    <div class="text-danger small">{{ producto_form.producto.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Escriba para buscar el producto</small>
+                            </div>
+                            <div class="col-md-2 form-group">
+                                <label>{{ producto_form.cantidad.label }}</label>
+                                {{ producto_form.cantidad }}
+                                {% if producto_form.cantidad.errors %}
+                                    <div class="text-danger small">{{ producto_form.cantidad.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" name="agregar_producto" class="btn btn-success btn-block">
+                                    <i class="icon ion-md-add"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Carrito de compras -->
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="icon ion-md-cart"></i> Carrito de Compras</h5>
+                    {% if carrito %}
+                    <a href="{% url 'ventas_limpiar_carrito' %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Vaciar todo el carrito?')">
+                        <i class="icon ion-md-trash"></i> Limpiar
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if carrito %}
+                        {% for item in carrito %}
+                        <div class="carrito-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-5">
+                                    <h6 class="mb-1">{{ item.nombre }}</h6>
+                                    <small class="{% if item.stock_disponible <= item.stock_minimo %}text-danger font-weight-bold{% else %}text-muted{% endif %}">
+                                        Stock disponible: {{ item.stock_disponible }}
+                                        {% if item.stock_disponible <= item.stock_minimo %}
+                                            <i class="icon ion-md-alert text-danger"></i> BAJO
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <span class="badge badge-info">x{{ item.cantidad }}</span>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <strong>${{ item.precio|floatformat:0 }}</strong>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <strong class="text-primary">${{ item.subtotal|floatformat:0 }}</strong>
+                                </div>
+                                <div class="col-md-1 text-right">
+                                    <a href="{% url 'ventas_quitar_producto' item.producto_id %}" class="btn btn-sm btn-danger" title="Quitar">
+                                        <i class="icon ion-md-close"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="icon ion-md-cart" style="font-size: 4rem; color: #ccc;"></i>
+                            <p class="text-muted mt-3">El carrito está vacío</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: Resumen y finalizar -->
+        <div class="col-lg-4">
+            <div class="resumen-venta">
+                <!-- Resumen de totales -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="icon ion-md-calculator"></i> Resumen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <strong id="subtotal">${{ subtotal|floatformat:0 }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Descuento:</span>
+                            <strong id="descuento">$0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>IVA (19%):</span>
+                            <strong id="iva">$0</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <span>TOTAL:</span>
+                            <span class="total-general" id="total">${{ subtotal|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de venta -->
+                {% if carrito %}
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="icon ion-md-document"></i> Datos de la Venta</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="form-venta">
+                            {% csrf_token %}
+
+                            <!-- Datos de factura / pago -->
+                            <div class="form-group">
+                                <label>{{ venta_form.numero_factura.label }}</label>
+                                {{ venta_form.numero_factura }}
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.descuento.label }}</label>
+                                {{ venta_form.descuento }}
+                                <small class="text-muted">Valor del descuento</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.metodo_pago.label }}</label>
+                                {{ venta_form.metodo_pago }}
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.abono.label }}</label>
+                                {{ venta_form.abono }}
+                                <div id="abono-info" class="text-muted">
+                                    <span id="abono-minimo-text"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.estado_pago.label }} <span class="text-muted">(Automático)</span></label>
+                                {{ venta_form.estado_pago }}
+                                <small class="text-muted">Se calcula automáticamente según el abono</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.observaciones.label }}</label>
+                                {{ venta_form.observaciones }}
+                            </div>
+
+                            <hr>
+
+                            <!-- Datos del cliente -->
+                            <h6 class="font-weight-bold mb-2"><i class="icon ion-md-person"></i> Datos del Cliente</h6>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.nombre_cliente.label }}</label>
+                                {{ venta_form.nombre_cliente }}
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.correo_cliente.label }}</label>
+                                {{ venta_form.correo_cliente }}
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.telefono_cliente.label }}</label>
+                                {{ venta_form.telefono_cliente }}
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ venta_form.direccion_cliente.label }}</label>
+                                {{ venta_form.direccion_cliente }}
+                            </div>
+
+                            <hr>
+
+                            <button type="submit" name="finalizar_venta" class="btn btn-success btn-block btn-lg">
+                                <i class="icon ion-md-checkmark-circle"></i> Finalizar Venta
+                            </button>
+                            <a href="{% url 'ventas_listar' %}" class="btn btn-secondary btn-block">
+                                <i class="icon ion-md-close"></i> Cancelar
+                            </a>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Inicializar Select2 para búsqueda de productos
+    $('.select2-producto').select2({
+        theme: 'bootstrap4',
+        width: '100%',
+        placeholder: 'Buscar producto...',
+        allowClear: true,
+        language: {
+            noResults: function() {
+                return "No se encontraron productos";
+            },
+            searching: function() {
+                return "Buscando...";
+            },
+            inputTooShort: function() {
+                return "Escriba para buscar";
+            }
+        }
+    });
+});
+
+// Calcular totales y estado automáticamente
+function calcularTotales() {
+    const subtotal = parseFloat({{ subtotal|default:"0" }});
+    const descuentoInput = document.getElementById('id_descuento');
+    const abonoInput = document.getElementById('id_abono');
+    const estadoPagoSelect = document.getElementById('id_estado_pago');
+    const abonoMinimoText = document.getElementById('abono-minimo-text');
+
+    const descuento = parseFloat(descuentoInput.value) || 0;
+    const iva = (subtotal - descuento) * 0.19;
+    const total = subtotal - descuento + iva;
+    const abono = parseFloat(abonoInput.value) || 0;
+
+    // Calcular abono mínimo (10%)
+    const abonoMinimo = total * 0.10;
+
+    // Actualizar texto de abono mínimo
+    if (abono > 0 && abono < total) {
+        abonoMinimoText.innerHTML = `Mínimo: <strong>$${abonoMinimo.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</strong> (10%)`;
+        abonoMinimoText.className = 'text-info';
+    } else {
+        abonoMinimoText.innerHTML = '';
+    }
+
+    // Calcular estado de pago automáticamente
+    let estadoPago = 'pendiente';
+    if (abono == 0) {
+        estadoPago = 'pendiente';
+    } else if (abono >= total) {
+        estadoPago = 'pagado';
+    } else if (abono >= abonoMinimo) {
+        estadoPago = 'parcial';
+    }
+
+    // Actualizar select de estado
+    estadoPagoSelect.value = estadoPago;
+
+    // Actualizar visualización de totales
+    document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    document.getElementById('descuento').textContent = '$' + descuento.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    document.getElementById('iva').textContent = '$' + iva.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    document.getElementById('total').textContent = '$' + total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Actualizar al cambiar valores
+document.addEventListener('DOMContentLoaded', function() {
+    const descuentoInput = document.getElementById('id_descuento');
+    const abonoInput = document.getElementById('id_abono');
+
+    if (descuentoInput && abonoInput) {
+        descuentoInput.addEventListener('input', calcularTotales);
+        abonoInput.addEventListener('input', calcularTotales);
+        calcularTotales();
+    }
+});
+</script>
+{% endblock %}

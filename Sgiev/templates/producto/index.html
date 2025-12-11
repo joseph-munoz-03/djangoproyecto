@@ -1,0 +1,548 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Inventario - Romar Natural</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        :root {
+            --primary: #3d862e;
+            --light: #ffffff;
+            --grey: #efefef;
+        }
+        
+        body {
+            font-family: 'Mulish', sans-serif;
+        }
+        
+        .badge-admin {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-operario {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2d6621;
+            border-color: #2d6621;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(61, 134, 46, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar-container {
+                position: fixed;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                height: 100vh;
+            }
+            
+            #sidebar-container.active {
+                left: 0;
+            }
+            
+            .menu-toggle {
+                display: block !important;
+            }
+        }
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 999;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+    
+</head>
+
+<body>
+    
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="icon ion-md-menu"></i>
+    </button>
+
+    <div class="d-flex">
+    <div id="sidebar-container" class="bg-primary">
+      <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+      <div class="menu">
+        <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
+        <a href="{% url 'usuarios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-contacts mr-2 lead"></i>Usuarios</a>
+        <a href="{% url 'listar_proveedores' %}" class="d-block text-light p-3"><i class="icon ion-md-cube mr-2 lead"></i>Proveedores</a>
+        <a href="{% url 'ventas_listar'%}" class="d-block text-light p-3"><i class="icon ion-md-cart mr-2 lead"></i>Ventas</a>
+        <a href="{% url 'list_categoria' %}" class="d-block text-light p-3"><i class="icon ion-md-copy mr-2 lead"></i>Categoria</a>
+        <a href="{% url 'list_producto' %}" class="d-block text-light p-3"><i class="icon ion-md-folder mr-2 lead"></i>Inventario</a>
+        <a href="{% url 'envios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bicycle mr-2 lead"></i>Envíos</a>
+        {% if usuario.tipo_usu == 'administrador' %}
+        <a href="{% url 'mensajeria_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bus mr-2 lead"></i>Mensajería</a>
+        {% endif %}
+      </div>
+    </div>
+
+        <div class="w-100">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                                    {{ usuario.p_nombre }} {{ usuario.p_apellido }}
+                                    <span class="badge {% if usuario.tipo_usu == 'administrador' %}badge-admin{% else %}badge-operario{% endif %}">
+                                        {{ usuario.tipo_usu|title }}
+                                    </span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="{% url 'perfil_usuario' %}">
+                                        <i class="icon ion-md-person mr-2"></i>Mi perfil
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="icon ion-md-log-out mr-2"></i>Cerrar Sesión
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <div id="content" class="p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="font-weight-bold text-success">Gestión de Inventario</h2>
+                    
+                    <div class="d-flex">
+                        <a class="btn btn-success mr-2" href="{% url 'registro_producto' %}">
+                            Nuevo Producto
+                        </a>
+                        <button class="btn btn-danger mr-2" data-toggle="modal" data-target="#SalidaInventarioModal">
+                            Reportar salida
+                        </button>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#ReporteProductosModal">
+                            <i class="icon ion-md-document"></i> Generar Reporte
+                        </button>
+                    </div>
+                </div>
+
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+
+                <div class="row">
+                    
+                    <div class="col-md-8">
+                        <h4 class="mb-3">Inventario Actual</h4>
+    
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                               <span class="input-group-text"><i class="icon ion-md-funnel"></i></span>
+                            </div>
+                          <input type="text" class="form-control" id="filtroTablaProductos" placeholder="Filtrar por Nombre o Categoría...">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="limpiarFiltro"><i class="icon ion-md-close"></i> Limpiar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead class="bg-primary text-light sticky-top">
+                                    <tr>
+                                        <th>Producto General</th>
+                                        <th>Categoría</th>
+                                        <th class="text-right">Precio Venta</th>
+                                        <th class="text-center">Stock TOTAL</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for producto in producto %}
+                                    <tr>
+                                        <td title="{{ producto.nombre_producto }} {{ producto.descripcion_producto }}">
+                                            {{ producto.nombre_producto|truncatechars:30 }} {{ producto.descripcion_producto }}
+                                        </td>
+                                        <td>
+                                            {{ producto.categoria_idcategoria__nombre_categoria }}
+                                        </td>
+                                        <td class="text-right">
+                                            <strong>$ {{ producto.precio_venta|floatformat:2 }}</strong>
+                                            {% if producto.precio_venta == 0 %}
+                                                <span class="badge badge-warning">Sin definir</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <b>{{ producto.stock_total }}</b>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info view-details-btn" 
+                                                    data-toggle="modal" 
+                                                    data-target="#DetalleProductoModal" 
+                                                    data-producto-id="{{ producto.id }}"
+                                                    title="Ver Lotes Individuales y Detalles">
+                                                <i class="icon ion-md-eye"></i> Lotes
+                                            </button>
+                                            
+                                            <a href="{% url 'editar_producto_maestro' producto.id %}" 
+                                               class="btn btn-sm btn-warning" 
+                                               title="Editar Producto y Precio de Venta">
+                                                <i class="icon ion-md-pricetag"></i> Editar Precio
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        
+                        <h4 class="mb-3">Historial de Compras (Entradas)</h4>
+                        <div class="card mb-4" style="max-height: 350px; overflow-y: auto;">
+                            <table class="table table-sm table-hover">
+                                <thead class="thead-light sticky-top">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Proveedor</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                     {% for compra in historial_compras %}
+                                 <tr>
+                                      <td>{{ compra.fecha_compra|date:"Y-m-d" }}</td>
+                                      <td>
+                                         {% if compra.proveedor_idproveedor %}
+                                             {{ compra.proveedor_idproveedor.nombre_proveedor|truncatechars:15 }}
+                                         {% else %}
+                                                N/D
+                                         {% endif %}
+                                      </td>
+                                       <td>${{ compra.total_compra|default:"0"|floatformat:0 }}</td>
+                                 </tr>
+                                {% endfor %}
+                                    </tbody>
+                            </table>
+                        </div>
+
+                        <h4 class="mb-3">Historial de Salidas (Ventas/Ajustes)</h4>
+                        <div class="card" style="max-height: 350px; overflow-y: auto;">
+                            <table class="table table-sm table-hover">
+                                <thead class="thead-light sticky-top">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Cant.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for salida in historial_salidas %} 
+                                    <tr>
+                                        <td>{{ salida.fecha_movimiento|date:"Y-m-d H:i" }}</td>
+                                        <td><span class="badge badge-secondary">{{ salida.tipo_movimiento|capfirst }}</span></td> 
+                                        <td>-{{ salida.cantidad }}</td> 
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3" class="text-center text-muted">No hay salidas recientes.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SALIDA INVENTARIO -->
+    <div class="modal fade" id="SalidaInventarioModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="icon ion-md-alert mr-2"></i> Registrar Salida/Ajuste de Inventario por Lote</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form action="{% url 'registrar_salida_inventario_ajuste' %}" method="post"> 
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="select_producto_general">Producto General:</label>
+                            <select class="form-control" id="select_producto_general" required>
+                                <option value="">Seleccione el producto</option>
+                                {% for p in producto %} 
+                                    <option value="{{ p.nombre_producto }} {{ p.descripcion_producto }}">
+                                        {{ p.nombre_producto }} {{ p.descripcion_producto }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="select_lote">Lote del producto a retirar:</label>
+                            <select class="form-control" id="select_lote" name="producto_id_lote" required disabled>
+                                <option value="">Seleccione un producto primero</option>
+                            </select>
+                            <small id="stock_info" class="form-text text-muted">Stock actual del lote: 0</small>
+                            <input type="hidden" id="hidden_codigo_barras" name="codigo_barras_hidden">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cantidad_salida">Cantidad a retirar (del lote):</label>
+                            <input type="number" class="form-control" id="cantidad_salida" name="cantidad_salida" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="motivo_salida">Motivo de la Salida (Observación):</label>
+                            <select class="form-control" id="motivo_salida" name="motivo_salida" required>
+                                <option value="">Seleccione el motivo de la baja</option>
+                                <option value="Producto Vencido">Vencimiento</option>
+                                <option value="Producto Roto/Dañado">Roto/Dañado</option>
+                                <option value="Devolución a Proveedor">Devolución a Proveedor</option>
+                                <option value="Descarte por Calidad (Naturales)">Descarte por Calidad</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Confirmar Baja (Ajuste)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE PRODUCTO -->
+    <div class="modal fade" id="DetalleProductoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="icon ion-md-eye mr-2"></i> Detalle Completo del Producto y Lotes
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-detalle-body">
+                    <div class="text-center p-5">Haga clic en "Ver Lotes" para ver detalles...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REPORTE -->
+    <div class="modal fade" id="ReporteProductosModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="icon ion-md-document mr-2"></i> Generar Reporte de Inventario</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form action="{% url 'generar_reporte_productos' %}" method="get"> 
+                    <div class="modal-body">
+                        <p>Selecciona los criterios de filtrado para el reporte.</p>
+                        
+                        <div class="form-group">
+                            <label for="filtro_categoria">Filtrar por Categoría:</label>
+                            <select class="form-control" id="filtro_categoria" name="categoria">
+                                <option value="">Todas las Categorías</option>
+                                {% for p in producto %} 
+                                    <option value="{{ p.id }}">
+                                        {{ p.categoria_idcategoria__nombre_categoria }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="filtro_stock">Estado de Stock:</label>
+                            <select class="form-control" id="filtro_stock" name="stock_estado">
+                                <option value="">Mostrar Todo</option>
+                                <option value="bajo">Solo Stock Bajo/Mínimo</option>
+                                <option value="vencido">Solo Vencidos/Próximos a Vencer</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="formato_reporte">Formato de Reporte:</label>
+                            <select class="form-control" id="formato_reporte" name="formato" required>
+                                <option value="excel">Excel (.xlsx)</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-info"><i class="icon ion-md-cloud-download"></i> Generar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+    
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar-container').classList.toggle('active');
+        }
+
+        const lotesJsonString = '{{ lotes_json | safe }}'; 
+        const lotesData = JSON.parse(lotesJsonString);
+        
+        const productoSelect = document.getElementById('select_producto_general');
+        const loteSelect = document.getElementById('select_lote');
+        const stockInfo = document.getElementById('stock_info');
+        const cantidadInput = document.getElementById('cantidad_salida');
+        const hiddenCodigoBarras = document.getElementById('hidden_codigo_barras');
+        
+        function llenarLotes() {
+            const nombreProductoSeleccionado = productoSelect.value.trim(); 
+            
+            loteSelect.innerHTML = '<option value="">Seleccione un lote</option>';
+            stockInfo.textContent = 'Stock actual del lote: 0';
+            loteSelect.disabled = true;
+            cantidadInput.value = ''; 
+            
+            if (nombreProductoSeleccionado) {
+                const lotesFiltrados = lotesData.filter(lote => 
+                    lote.nombre_producto_completo.trim() === nombreProductoSeleccionado
+                );
+                
+                lotesFiltrados.forEach(lote => {
+                    const option = document.createElement('option');
+                    option.value = lote.id; 
+                    option.textContent = `Lote: ${lote.codigo_barras} (Vence: ${lote.fecha_vencimiento || 'N/A'} | Stock: ${lote.stock_actual})`;
+                    option.dataset.stock = lote.stock_actual; 
+                    option.dataset.codbarras = lote.codigo_barras; 
+                    loteSelect.appendChild(option);
+                });
+
+                if (lotesFiltrados.length > 0) {
+                    loteSelect.disabled = false;
+                }
+            }
+            
+            loteSelect.dispatchEvent(new Event('change'));
+        }
+
+        function actualizarStockYCampos() {
+            const selectedOption = loteSelect.options[loteSelect.selectedIndex];
+            
+            if (selectedOption && selectedOption.value) {
+                const stock = selectedOption.dataset.stock;
+                const codBarras = selectedOption.dataset.codbarras;
+                
+                stockInfo.textContent = `Stock actual del lote: ${stock}`;
+                hiddenCodigoBarras.value = codBarras; 
+                cantidadInput.max = stock; 
+            } else {
+                stockInfo.textContent = 'Stock actual del lote: 0';
+                hiddenCodigoBarras.value = '';
+                cantidadInput.max = null;
+            }
+        }
+        
+        productoSelect.addEventListener('change', llenarLotes);
+        loteSelect.addEventListener('change', actualizarStockYCampos);
+
+        $(document).ready(function() {
+            $('.view-details-btn').on('click', function() {
+                const productoId = $(this).data('producto-id');
+                const modalBody = $('#modal-detalle-body');
+                
+                modalBody.html('<div class="text-center p-5"><i class="icon ion-md-refresh spin lead text-info"></i> Cargando detalles...</div>');
+                
+                const urlDetalle = `{% url 'detalle_producto_modal' 0 %}`.replace('0', productoId); 
+
+                $.ajax({
+                    url: urlDetalle,
+                    type: 'GET',
+                    success: function(data) {
+                        modalBody.html(data); 
+                    },
+                    error: function() {
+                        modalBody.html('<div class="alert alert-danger">Error al cargar los detalles.</div>');
+                    }
+                });
+            });
+        });
+
+        const inputFiltro = $('#filtroTablaProductos');
+        const tablaBody = $('.table-responsive table tbody');
+
+        function aplicarFiltro() {
+            const textoBusqueda = inputFiltro.val().toLowerCase();
+
+            tablaBody.find('tr').each(function() {
+                const row = $(this);
+                const productoGeneral = row.children('td:eq(0)').text().toLowerCase();
+                const categoria = row.children('td:eq(1)').text().toLowerCase(); 
+
+                if (productoGeneral.includes(textoBusqueda) || categoria.includes(textoBusqueda)) {
+                    row.show(); 
+                } else {
+                    row.hide();
+                }
+            });
+        }
+
+        inputFiltro.on('keyup', aplicarFiltro);
+
+        $('#limpiarFiltro').on('click', function() {
+            inputFiltro.val(''); 
+            aplicarFiltro();    
+        });
+    </script>
+</body>
+</html>

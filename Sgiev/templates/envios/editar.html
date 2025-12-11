@@ -1,0 +1,213 @@
+{% extends 'envios/base_envios.html' %}
+
+{% block title %}{{ titulo }} - Romar Natural{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-bicycle"></i> {{ titulo }}
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'envios_listar' %}">Envíos</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'envios_detalle' envio.id %}">Detalle</a></li>
+                    <li class="breadcrumb-item active">Editar</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-{% if solo_estado %}6 offset-lg-3{% else %}10 offset-lg-1{% endif %}">
+            <div class="card">
+                <div class="card-header {% if es_admin %}bg-primary{% else %}bg-warning{% endif %} text-white">
+                    <h5 class="mb-0">
+                        <i class="icon ion-md-document"></i> 
+                        {% if es_admin %}
+                            Editar Información Completa del Envío
+                        {% else %}
+                            Actualizar Estado del Envío
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Info de solo lectura -->
+                    {% if solo_estado %}
+                    <div class="alert alert-info">
+                        <h6 class="font-weight-bold">Información del Envío</h6>
+                        <p class="mb-1"><strong>Factura:</strong> {{ envio.venta_idfactura.numero_factura }}</p>
+                        <p class="mb-1"><strong>Mensajería:</strong> {{ envio.fk_mensajeria.nombre_mensajeria }}</p>
+                        <p class="mb-1"><strong>Origen:</strong> {{ envio.direccion_salida }}</p>
+                        <p class="mb-1"><strong>Destino:</strong> {{ envio.direccion_envio }}</p>
+                        <p class="mb-1"><strong>Fecha Envío:</strong> {{ envio.fecha_envio|date:"d/m/Y" }}</p>
+                        <p class="mb-0"><strong>Fecha Entrega:</strong> {{ envio.fecha_entrega|date:"d/m/Y" }}</p>
+                    </div>
+                    <hr>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if es_admin %}
+                        <!-- FORMULARIO COMPLETO PARA ADMIN -->
+                        
+                        <h6 class="border-bottom pb-2 mb-3">Datos Generales</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.venta_idfactura.label }} *</label>
+                                {{ form.venta_idfactura }}
+                                {% if form.venta_idfactura.errors %}
+                                    <div class="text-danger small">{{ form.venta_idfactura.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.fk_mensajeria.label }} *</label>
+                                {{ form.fk_mensajeria }}
+                                {% if form.fk_mensajeria.errors %}
+                                    <div class="text-danger small">{{ form.fk_mensajeria.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Fechas y Estado</h6>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label>{{ form.estado_envio.label }} *</label>
+                                {{ form.estado_envio }}
+                                {% if form.estado_envio.errors %}
+                                    <div class="text-danger small">{{ form.estado_envio.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ form.fecha_envio.label }} *</label>
+                                {{ form.fecha_envio }}
+                                {% if form.fecha_envio.errors %}
+                                    <div class="text-danger small">{{ form.fecha_envio.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ form.fecha_entrega.label }} *</label>
+                                {{ form.fecha_entrega }}
+                                {% if form.fecha_entrega.errors %}
+                                    <div class="text-danger small">{{ form.fecha_entrega.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Direcciones</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.direccion_salida.label }} *</label>
+                                {{ form.direccion_salida }}
+                                {% if form.direccion_salida.errors %}
+                                    <div class="text-danger small">{{ form.direccion_salida.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.direccion_envio.label }} *</label>
+                                {{ form.direccion_envio }}
+                                {% if form.direccion_envio.errors %}
+                                    <div class="text-danger small">{{ form.direccion_envio.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Observaciones</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.observaciones.label }}</label>
+                                {{ form.observaciones }}
+                                {% if form.observaciones.errors %}
+                                    <div class="text-danger small">{{ form.observaciones.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ form.novedades.label }}</label>
+                                {{ form.novedades }}
+                                {% if form.novedades.errors %}
+                                    <div class="text-danger small">{{ form.novedades.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% else %}
+                        <!-- FORMULARIO LIMITADO PARA OPERARIO -->
+                        
+                        <h6 class="border-bottom pb-2 mb-3">Actualizar Estado</h6>
+                        <div class="form-group">
+                            <label>{{ form.estado_envio.label }} *</label>
+                            {{ form.estado_envio }}
+                            {% if form.estado_envio.errors %}
+                                <div class="text-danger small">{{ form.estado_envio.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">Seleccione el estado actual del envío</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>{{ form.novedades.label }}</label>
+                            {{ form.novedades }}
+                            {% if form.novedades.errors %}
+                                <div class="text-danger small">{{ form.novedades.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">Registre cualquier novedad importante</small>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="icon ion-md-information-circle"></i> 
+                            <strong>Nota:</strong> Como operario, solo puedes actualizar el estado y las novedades del envío. 
+                            Para modificar otros datos, contacta al administrador.
+                        </div>
+                        
+                        {% endif %}
+
+                        <hr>
+
+                        <button type="submit" class="btn {% if es_admin %}btn-primary{% else %}btn-warning{% endif %} btn-block">
+                            <i class="icon ion-md-checkmark"></i> 
+                            {% if es_admin %}Guardar Cambios{% else %}Actualizar Estado{% endif %}
+                        </button>
+                        <a href="{% url 'envios_detalle' envio.id %}" class="btn btn-secondary btn-block">
+                            <i class="icon ion-md-close"></i> Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar Select2 con búsqueda (solo si es admin)
+        {% if es_admin %}
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%',
+            placeholder: 'Seleccione una opción',
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return "No se encontraron resultados";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

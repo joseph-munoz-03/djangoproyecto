@@ -1,0 +1,59 @@
+:root{
+    --primary: #3d862e;
+    --ligth: #ffffff;
+    --grey: #efefef;
+}
+
+body{
+    overflow: hidden;
+    font-family: 'Mulish', sans-serif;
+    font-weight: 300;
+    color: var(--primary);
+}
+
+a:hover{
+    text-decoration: none;
+}
+
+.bg-primary{background-color: var(--primary) !important;}
+.bg-mix{background: linear-gradient(180deg, var(--ligth) 50%, var(--grey 0));}
+/*.bg-grey{background-color: var(--grey) !important;}*/
+
+
+#sidebar-container{
+    min-height: 100vh;
+}
+
+#sidebar-container .logo{
+    padding: .875rem 1.25rem;
+}
+
+#sidebar-container .menu{
+    width: 18rem;
+}
+
+#content{
+    overflow-y: auto;
+    height: 100vh;
+    padding: 5rem;
+}
+
+.stat{
+    border-right: 1px solid var(--grey);
+}
+
+
+/* Botones compactos sin afectar nada más */
+.btn-compact {
+    padding: .35rem .75rem;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    border-radius: 0.35rem;
+    white-space: nowrap; /* evita que el texto se parta */
+}
+
+.btn-compact .icon {
+    font-size: 1rem;
+    margin-right: .3rem;
+    vertical-align: middle;
+}

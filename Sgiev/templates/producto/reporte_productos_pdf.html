@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Reporte de Inventario</title>
+    <style>
+        body { font-family: sans-serif; margin: 30px; }
+        h1 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+        th { background-color: #f2f2f2; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: right; font-size: 10px; padding: 10px; border-top: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Inventario Actual - Reporte de Productos</h1>
+    
+    <p>
+        **Fecha de Reporte:** {{ fecha_reporte|date:"d M Y" }} <br>
+        **Filtros Aplicados:** {{ filtros_aplicados|default:"Ninguno"|capfirst }}
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre y Descripción</th>
+                <th>Lote</th>
+                <th>Stock</th>
+                <th>Mínimo</th>
+                <th>Vencimiento</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td>{{ producto.id }}</td>
+                <td>{{ producto.nombre_producto }} {{ producto.descripcion_producto }}</td>
+                <td>{{ producto.codigo_barras }}</td>
+                <td>{{ producto.stock_actual }}</td>
+                <td>{{ producto.stock_minimo }}</td>
+                <td>{{ producto.fecha_vencimiento|date:"Y-m-d"|default:"N/A" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No se encontraron productos con los filtros seleccionados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Página <span class="page"></span> de <span class="topage"></span>
+    </div>
+</body>
+</html>

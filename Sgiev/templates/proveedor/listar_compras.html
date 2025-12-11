@@ -1,0 +1,83 @@
+{% extends "proveedor/base_prov.html" %}
+
+{% block title %}Historial de Compras - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-cart"></i> Historial de Compras
+            </h2>
+            <p class="text-muted">Listado de todas las compras registradas</p>
+        </div>
+
+        <div class="col-md-6 text-right d-flex justify-content-end align-items-center">
+            <a href="{% url 'listar_proveedores' %}" class="btn btn-secondary btn-compact">
+                <i class="icon ion-md-arrow-back"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de compras -->
+    <div class="card">
+        <div class="card-body p-0">
+
+            {% if compras %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Factura #</th>
+                            <th>Fecha</th>
+                            <th>Registró</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for c in compras %}
+                        <tr>
+                            <td><strong>{{ c.numero_factura_compra }}</strong></td>
+                            <td>{{ c.fecha_compra|date:"Y-m-d" }}</td>
+                            <td>{{ c.usuarios_id_usuario.nombre_completo }}</td>
+                            <td>${{ c.total_compra|floatformat:2 }}</td>
+
+                            <td>
+                                <span class="badge 
+                                    {% if c.estado_compra == 'recibida' %}badge-success
+                                    {% elif c.estado_compra == 'cancelada' %}badge-danger
+                                    {% else %}badge-warning{% endif %}
+                                ">
+                                    {{ c.get_estado_compra_display }}
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <a href="{% url 'detalle_compra' c.id %}" class="btn btn-sm btn-info">
+                                    <i class="icon ion-md-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            {% else %}
+            <div class="text-center p-5">
+                <i class="icon ion-md-alert" style="font-size: 3rem; color: #ccc;"></i>
+                <p class="text-muted mt-2">No hay compras registradas</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

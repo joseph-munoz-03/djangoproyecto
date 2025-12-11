@@ -1,0 +1,87 @@
+{% extends "categoria/base_cat.html" %}
+
+{% block title %}Editar Categoría - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-create"></i> Editar Categoría
+            </h2>
+
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'list_categoria' %}">Categorías</a></li>
+                    <li class="breadcrumb-item active">Editar</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Card Form -->
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="icon ion-md-document"></i> Formulario de Edición
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <form action="{% url 'editar_categoria' categoria.id %}" method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Información General -->
+                        <h6 class="border-bottom pb-2 mb-3">Información General</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="nombreCat">Nombre *</label>
+                                <input type="text" id="nombreCat" name="nombreCat"
+                                       class="form-control"
+                                       value="{{ categoria.nombre_categoria }}" required>
+                            </div>
+
+                            <div class="col-md-6 form-group">
+                                <label for="descCat">Descripción *</label>
+                                <input type="text" id="descCat" name="descCat"
+                                       class="form-control"
+                                       value="{{ categoria.descripcion_categoria }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Estado</h6>
+
+                        <div class="form-group">
+                            <label for="estadoCat">Estado de la categoría *</label>
+                            <select id="estadoCat" name="estadoCat" class="form-control" required>
+                                <option value="">Seleccione una opción</option>
+                                <option value="1" {% if categoria.activo == 1 %}selected{% endif %}>Activo</option>
+                                <option value="0" {% if categoria.activo == 0 %}selected{% endif %}>Inactivo</option>
+                            </select>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="icon ion-md-checkmark"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'list_categoria' %}" class="btn btn-secondary">
+                                <i class="icon ion-md-close"></i> Cancelar
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

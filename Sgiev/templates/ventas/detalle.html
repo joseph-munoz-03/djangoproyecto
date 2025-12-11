@@ -1,0 +1,230 @@
+{% extends 'ventas/base_ventas.html' %}
+
+{% block title %}Detalle Venta {{ venta.numero_factura }} - Romar Natural{% endblock %}
+
+{% block extra_css %}
+<style>
+    .factura-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2d6621 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px 10px 0 0;
+    }
+    .factura-body {
+        background: white;
+        padding: 30px;
+    }
+    .info-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        #sidebar-container,
+        nav,
+        .breadcrumb {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid no-print">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-document"></i> Factura {{ venta.numero_factura }}
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'ventas_listar' %}">Ventas</a></li>
+                    <li class="breadcrumb-item active">{{ venta.numero_factura }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-right">
+            {% if es_admin %}
+            <a href="{% url 'ventas_editar_estado' venta.id %}" class="btn btn-warning">
+                <i class="icon ion-md-create"></i> Editar Estado / Cliente
+            </a>
+            {% endif %}
+
+            <a href="{% url 'ventas_generar_pdf' venta.id %}" class="btn btn-success">
+                <i class="icon ion-md-download"></i> Descargar PDF
+            </a>
+
+            {% if es_admin %}
+            <a href="{% url 'ventas_eliminar' venta.id %}"
+               class="btn btn-danger"
+               onclick="return confirm('⚠️ ¿ELIMINAR ESTA VENTA?\\n\\nFactura: {{ venta.numero_factura }}\\nTotal: ${{ venta.valor_total|floatformat:0 }}\\n\\n✓ El stock será devuelto al inventario\\n✓ Esta acción NO se puede deshacer\\n\\n¿Continuar?')">
+                <i class="icon ion-md-trash"></i> Eliminar Venta
+            </a>
+            {% endif %}
+
+            <a href="{% url 'ventas_listar' %}" class="btn btn-secondary">
+                <i class="icon ion-md-arrow-back"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Factura -->
+<div class="container">
+    <div class="card shadow-lg">
+        <!-- Header de factura -->
+        <div class="factura-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <h1 class="mb-0">Romar Natural</h1>
+                    <p class="mb-0">NIT: 52101085</p>
+                    <p class="mb-0">Teléfono: 3053615676</p>
+                </div>
+                <div class="col-md-6 text-right">
+                    <h2 class="mb-2">FACTURA</h2>
+                    <h3>{{ venta.numero_factura }}</h3>
+                    <p class="mb-0">{{ venta.fecha_factura|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cuerpo de factura -->
+        <div class="factura-body">
+            <!-- Información general -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6 class="font-weight-bold mb-2">Vendedor</h6>
+                        <p class="mb-1">{{ venta.usuarios_id_usuario.nombre_completo }}</p>
+                        <p class="mb-0 small text-muted">{{ venta.usuarios_id_usuario.correo }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6 class="font-weight-bold mb-2">Información de Pago</h6>
+                        <p class="mb-1">
+                            <strong>Método:</strong>
+                            <span class="badge badge-secondary">{{ venta.metodo_pago|title }}</span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Estado:</strong>
+                            {% if venta.estado_pago == 'pagado' %}
+                                <span class="badge badge-success">Pagado</span>
+                            {% elif venta.estado_pago == 'pendiente' %}
+                                <span class="badge badge-danger">Pendiente</span>
+                            {% else %}
+                                <span class="badge badge-warning">Parcial</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6 class="font-weight-bold mb-2">Datos del Cliente</h6>
+                        {% if venta.nombre_cliente %}
+                            <p class="mb-1"><strong>Nombre:</strong> {{ venta.nombre_cliente }}</p>
+                        {% endif %}
+                        {% if venta.correo_cliente %}
+                            <p class="mb-1"><strong>Correo:</strong> {{ venta.correo_cliente }}</p>
+                        {% endif %}
+                        {% if venta.telefono_cliente %}
+                            <p class="mb-1"><strong>Teléfono:</strong> {{ venta.telefono_cliente }}</p>
+                        {% endif %}
+                        {% if venta.direccion_cliente %}
+                            <p class="mb-0"><strong>Dirección:</strong> {{ venta.direccion_cliente }}</p>
+                        {% endif %}
+                        {% if not venta.nombre_cliente and not venta.correo_cliente and not venta.direccion_cliente %}
+                            <p class="mb-0 text-muted small">Sin datos de cliente registrados.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <h5 class="mb-3 font-weight-bold">Productos</h5>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th width="50">#</th>
+                            <th>Producto</th>
+                            <th width="100" class="text-center">Cantidad</th>
+                            <th width="150" class="text-right">Precio Unit.</th>
+                            <th width="150" class="text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in productos %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ item.producto_idproducto.nombre_producto }}</strong>
+                                <br>
+                                <small class="text-muted">{{ item.producto_idproducto.descripcion_producto|truncatewords:10 }}</small>
+                            </td>
+                            <td class="text-center">{{ item.cantidad }}</td>
+                            <td class="text-right">${{ item.valor_unitario|floatformat:0 }}</td>
+                            <td class="text-right"><strong>${{ item.subtotal_linea|floatformat:0 }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totales -->
+            <div class="row">
+                <div class="col-md-6">
+                    {% if venta.observaciones %}
+                    <div class="info-box">
+                        <h6 class="font-weight-bold mb-2">Observaciones</h6>
+                        <p class="mb-0">{{ venta.observaciones }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <td class="text-right"><strong>Subtotal:</strong></td>
+                            <td class="text-right" width="150">${{ venta.subtotal|floatformat:0 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>Descuento:</strong></td>
+                            <td class="text-right text-danger">-${{ venta.descuento|floatformat:0 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>IVA (19%):</strong></td>
+                            <td class="text-right">${{ venta.iva|floatformat:0 }}</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td class="text-right"><h5 class="mb-0"><strong>TOTAL:</strong></h5></td>
+                            <td class="text-right"><h5 class="mb-0"><strong>${{ venta.valor_total|floatformat:0 }}</strong></h5></td>
+                        </tr>
+                        {% if venta.abono > 0 %}
+                        <tr>
+                            <td class="text-right"><strong>Abono:</strong></td>
+                            <td class="text-right text-success">${{ venta.abono|floatformat:0 }}</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td class="text-right"><strong>Saldo Pendiente:</strong></td>
+                            <td class="text-right"><strong>${{ venta.saldo_pendiente|floatformat:0 }}</strong></td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-5 pt-4 border-top">
+                <p class="text-muted mb-0">Gracias por su compra</p>
+                <p class="text-muted small">Romar Natural - Productos naturales de calidad</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

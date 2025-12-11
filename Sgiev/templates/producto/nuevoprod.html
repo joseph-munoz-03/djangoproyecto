@@ -1,0 +1,241 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Registrar Producto | Romar Natural</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        :root {
+            --primary: #3d862e;
+            --light: #ffffff;
+            --grey: #efefef;
+        }
+        
+        body {
+            font-family: 'Mulish', sans-serif;
+        }
+        
+        .badge-admin {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-operario {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2d6621;
+            border-color: #2d6621;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(61, 134, 46, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar-container {
+                position: fixed;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                height: 100vh;
+            }
+            
+            #sidebar-container.active {
+                left: 0;
+            }
+            
+            .menu-toggle {
+                display: block !important;
+            }
+        }
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 999;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="icon ion-md-menu"></i>
+    </button>
+
+    <div class="d-flex">
+    <div id="sidebar-container" class="bg-primary">
+      <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+      <div class="menu">
+        <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
+        <a href="{% url 'usuarios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-contacts mr-2 lead"></i>Usuarios</a>
+        <a href="{% url 'listar_proveedores' %}" class="d-block text-light p-3"><i class="icon ion-md-cube mr-2 lead"></i>Proveedores</a>
+        <a href="{% url 'ventas_listar'%}" class="d-block text-light p-3"><i class="icon ion-md-cart mr-2 lead"></i>Ventas</a>
+        <a href="{% url 'list_categoria' %}" class="d-block text-light p-3"><i class="icon ion-md-copy mr-2 lead"></i>Categoria</a>
+        <a href="{% url 'list_producto' %}" class="d-block text-light p-3"><i class="icon ion-md-folder mr-2 lead"></i>Inventario</a>
+        <a href="{% url 'envios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bicycle mr-2 lead"></i>Envíos</a>
+        {% if usuario.tipo_usu == 'administrador' %}
+        <a href="{% url 'mensajeria_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bus mr-2 lead"></i>Mensajería</a>
+        {% endif %}
+      </div>
+    </div>
+
+        <div class="w-100">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                                    {{ usuario.p_nombre }} {{ usuario.p_apellido }}
+                                    <span class="badge {% if usuario.tipo_usu == 'administrador' %}badge-admin{% else %}badge-operario{% endif %}">
+                                        {{ usuario.tipo_usu|title }}
+                                    </span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="{% url 'perfil_usuario' %}">
+                                        <i class="icon ion-md-person mr-2"></i>Mi perfil
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="icon ion-md-log-out mr-2"></i>Cerrar Sesión
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            
+            <div id="content" class="p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="font-weight-bold text-success">Registrar Nuevo Producto (Catálogo)</h2>
+                    <a class="btn btn-secondary" href="{% url 'list_producto' %}">
+                        <i class="icon ion-md-arrow-back"></i> Volver al listado
+                    </a>
+                </div>
+                {% if messages %}
+<div class="mb-4">
+    {% for message in messages %}
+        <div class="alert 
+            {% if 'error' in message.tags %}alert-danger
+            {% elif 'success' in message.tags %}alert-success
+            {% else %}alert-info
+            {% endif %}
+            alert-dismissible fade show" 
+        role="alert">
+
+            {{ message }}
+
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+                
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <form action="{% url 'registro_producto' %}" method="post">
+                            {% csrf_token %}
+                            
+                            <h5 class="mb-3 text-primary">Detalles Básicos</h5>
+                            <hr class="mt-0">
+
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="nombre_producto">Nombre del Producto</label>
+                                    <input type="text" id="nombre_producto" name="nombre_producto" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="descripcion_producto">Descripción</label>
+                                    <textarea id="descripcion_producto" name="descripcion_producto" class="form-control" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            
+                            <h5 class="mb-3 mt-4 text-primary">Información Sanitaria y Regulatoria</h5>
+                            <hr class="mt-0">
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="registrosanitario">Registro Sanitario</label>
+                                    <input type="text" id="registrosanitario" name="registrosaniario" class="form-control" required>
+                                </div>
+                                </div>
+                            
+                            <h5 class="mb-3 mt-4 text-primary">Clasificación y Proveedor</h5>
+                            <hr class="mt-0">
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="categoria_idcategoria">Categoría</label>
+                                    <select id="categoria_idcategoria" name="categoria_idcategoria" class="form-control" required>
+                                        <option value="">Seleccione</option>
+                                        {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre_categoria }}</option>{% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="proveedor_idproveedor">Proveedor</label>
+                                    <select id="proveedor_idproveedor" name="proveedor_idproveedor" class="form-control" required>
+                                        <option value="">Seleccione</option>
+                                        {% for p in proveedores %}<option value="{{ p.id }}">{{ p.nombre_proveedor }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="text-right mt-5">
+                                <button type="submit" class="btn btn-success px-4 btn-lg">
+                                    <i class="icon ion-md-checkmark"></i> Registrar Producto
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
+
+    
+</body>
+</html>

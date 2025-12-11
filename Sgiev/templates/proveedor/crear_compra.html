@@ -1,0 +1,491 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Compra | Romar Natural</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+    .table-carrito th { 
+        background-color: #f8f9fa; 
+    }
+    .table-carrito tfoot td { 
+        font-weight: bold; 
+        border-top: 2px solid #dee2e6; 
+    }
+
+    #sidebar-container {
+        width: 250px; 
+        flex-shrink: 0;
+    }
+   
+    .fixed-actions-bar {
+        position: fixed;
+        bottom: 0;
+        left: 250px; 
+        right: auto; 
+        width: calc(100% - 250px); 
+        margin-left: 0;
+        
+        background-color: #f8f9fa; 
+        border-top: 1px solid #dee2e6;
+        padding: 15px 25px; 
+        z-index: 1030;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); 
+        display: flex;
+        justify-content: flex-end; 
+        align-items: center;
+    }
+
+    #content {
+        padding-bottom: 250px !important; 
+    }
+
+    :root {
+        --primary: #3d862e;
+        --light: #ffffff;
+        --grey: #efefef;
+    }
+    
+    body {
+        font-family: 'Mulish', sans-serif;
+    }
+    
+    .badge-admin {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .badge-operario {
+        background-color: #ffc107;
+        color: #333;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .btn-primary:hover {
+        background-color: #2d6621;
+        border-color: #2d6621;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(61, 134, 46, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        #sidebar-container {
+            position: fixed;
+            left: -100%;
+            transition: left 0.3s ease;
+            z-index: 1000;
+            height: 100vh;
+        }
+        
+        #sidebar-container.active {
+            left: 0;
+        }
+
+        .menu-toggle {
+            display: block !important;
+        }
+
+        .fixed-actions-bar {
+            margin-left: 0;
+            padding: 12px 16px;
+            left: 0;
+            width: 100%;
+        }
+
+        #content {
+            padding-bottom: 120px !important;
+        }
+    }
+    
+    .menu-toggle {
+        display: none;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 999;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+    }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i class="icon ion-md-menu"></i>
+</button>
+
+<div class="d-flex">
+    <div id="sidebar-container" class="bg-primary">
+        <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+        <div class="menu">
+            <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
+            <a href="{% url 'usuarios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-contacts mr-2 lead"></i>Usuarios</a>
+            <a href="{% url 'listar_proveedores' %}" class="d-block text-light p-3"><i class="icon ion-md-cube mr-2 lead"></i>Proveedores</a>
+            <a href="{% url 'ventas_listar'%}" class="d-block text-light p-3"><i class="icon ion-md-cart mr-2 lead"></i>Ventas</a>
+            <a href="{% url 'list_categoria' %}" class="d-block text-light p-3"><i class="icon ion-md-copy mr-2 lead"></i>Categoria</a>
+            <a href="{% url 'list_producto' %}" class="d-block text-light p-3"><i class="icon ion-md-folder mr-2 lead"></i>Inventario</a>
+            <a href="{% url 'envios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bicycle mr-2 lead"></i>Envíos</a>
+            {% if usuario.tipo_usu == 'administrador' %}
+            <a href="{% url 'mensajeria_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bus mr-2 lead"></i>Mensajería</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="w-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                                {{ usuario.p_nombre }} {{ usuario.p_apellido }}
+                                <span class="badge {% if usuario.tipo_usu == 'administrador' %}badge-admin{% else %}badge-operario{% endif %}">
+                                    {{ usuario.tipo_usu|title }}
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="#">
+                                    <i class="icon ion-md-person mr-2"></i>Mi perfil
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{% url 'logout' %}">
+                                    <i class="icon ion-md-log-out mr-2"></i>Cerrar Sesión
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div id="content" class="p-4">
+            <div class="card-compra">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="text-success mb-0">Nueva Compra a {{ proveedor.nombre_proveedor }}</h3>
+                    <small class="text-muted">Proveedor ID: {{ proveedor.pk }}</small>
+                </div>
+                
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+                
+                <h5 class="mt-4 mb-3 text-primary">Agregar Producto a la Compra</h5>
+                
+                <form id="form_agregar_producto" method="POST" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="agregar_producto" value="1">
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>Tipo de producto</label>
+                            <select class="form-control" id="tipo_producto" name="tipo_producto">
+                                <option value="existente">Producto Existente</option>
+                                <option value="nuevo">Producto Nuevo</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Cantidad *</label>
+                            <input type="number" class="form-control" name="cantidad" min="1" value="1" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Lote *</label>
+                            <input type="text" class="form-control" name="lote" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Precio unitario (Compra) *</label>
+                            <input type="number" step="0.01" class="form-control" name="valor_unitario" min="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Fecha vencimiento (Opcional)</label>
+                            <input type="date" class="form-control" name="fecha_vencimiento" id="fecha_vencimiento">
+                            <small class="form-text text-muted">Si no se ingresa, se asignará fecha por defecto (31/12/2099)</small>
+                        </div>
+                        
+                        
+                    </div>
+
+                    <div id="producto_existente_box" class="mb-3">
+                        <label>Seleccionar producto existente *</label>
+                        <select class="form-control" name="producto_id" id="select_producto_existente">
+                            <option value="" selected disabled>-- Selecciona un producto del Catálogo --</option>
+                            {% for pr in productos %}
+                                <option value="{{ pr.id }}">
+                                    {{ pr.nombre_producto }} 
+                                    {% if pr.stock_actual is not None %}
+                                        — Stock Total: {{ pr.stock_actual }}
+                                    {% else %}
+                                        — Sin Stock
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-info btn-block">
+                                <i class="icon ion-md-add-circle mr-2"></i>Añadir a la Lista de Compra
+                            </button>
+                    </div>
+
+                    <div id="producto_nuevo_box" style="display:none;" class="mb-3 border p-3 rounded bg-light">
+                        <h5 class="text-info mb-3">Detalles del Nuevo Producto</h5>
+                        <div class="alert alert-info">
+                            <i class="icon ion-md-information-circle mr-2"></i>
+                            <strong>Nota:</strong> El precio de venta se puede configurar después desde el módulo de inventario.
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="id_nombre_producto">Nombre Producto *</label>
+                                <input type="text" class="form-control" id="id_nombre_producto" name="nombre_producto" maxlength="100">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="id_categoria">Categoría *</label>
+                                <select class="form-control" id="id_categoria" name="categoria"> 
+                                    <option value="" selected disabled>Selecciona una Categoría</option>
+                                    {% for cat in categorias %}
+                                        <option value="{{ cat.id }}">{{ cat.nombre_categoria }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_descripcion_producto">Descripción</label>
+                            <textarea class="form-control" id="id_descripcion_producto" name="descripcion_producto" rows="2" maxlength="255"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="id_registrosanitario">Registro Sanitario</label>
+                                <input type="text" class="form-control" id="id_registrosanitario" name="registrosanitario" maxlength="100">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="id_stock_minimo">Stock Mínimo</label>
+                                <input type="number" class="form-control" id="id_stock_minimo" name="stock_minimo" value="1" min="1">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="id_stock_maximo">Stock Máximo</label>
+                                <input type="number" class="form-control" id="id_stock_maximo" name="stock_maximo" value="1000" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                </form>
+
+                <hr>
+
+                <h5 class="mt-4 mb-3 text-secondary">Productos en la Lista de Compra (Carrito)</h5>
+                
+                {% if not carrito %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="icon ion-md-warning mr-2"></i>
+                        No hay productos en la lista de compra. Añade al menos uno para continuar.
+                    </div>
+                {% else %}
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm table-striped table-bordered table-carrito">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Lote</th>
+                                    <th class="text-right">Precio Compra</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-right">Subtotal</th>
+                                    <th class="text-center">Vencimiento</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in carrito %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.nombre }}</td>
+                                    <td>
+                                        <span class="badge badge-secondary">{{ item.lote }}</span>
+                                    </td>
+                                    <td class="text-right">$ {{ item.precio|floatformat:2 }}</td>
+                                    <td class="text-center">{{ item.cantidad }}</td>
+                                    <td class="text-right"><strong>$ {{ item.subtotal|floatformat:2 }}</strong></td>
+                                    <td class="text-center">
+                                        {% if item.fecha_vencimiento %}
+                                            {{ item.fecha_vencimiento }}
+                                        {% else %}
+                                            <span class="text-muted">Por defecto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'compra_quitar_producto' proveedor.id item.temp_id %}" 
+                                           class="btn btn-sm btn-danger" 
+                                           title="Quitar producto"
+                                           onclick="return confirm('¿Estás seguro de quitar este producto?');">
+                                            <i class="icon ion-md-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="text-right">SUBTOTAL COMPRA:</td>
+                                    <td class="text-right">$ {{ subtotal_compra|floatformat:2 }}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="text-right">IVA (19%):</td>
+                                    <td class="text-right">$ {{ iva_compra|floatformat:2 }}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td colspan="5" class="text-right"><strong>TOTAL COMPRA:</strong></td>
+                                    <td class="text-right"><strong>$ {{ total_compra|floatformat:2 }}</strong></td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <h5 class="mt-4 mb-3 text-secondary">Detalles Finales de la Compra</h5>
+                    <form id="form_finalizar_compra_details" method="POST" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="finalizar_compra" value="1">
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Número de Factura (Opcional)</label>
+                                <input type="text" class="form-control" name="numero_factura" placeholder="Se generará automáticamente si se deja vacío">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Estado de la compra *</label>
+                                <select class="form-control" name="estado_compra" required>
+                                    <option value="pendiente" selected>Pendiente (sin afectar stock)</option>
+                                    <option value="recibida">Recibida (actualiza stock)</option>
+                                </select>
+                                <small class="form-text text-muted">Si seleccionas "Recibida", el stock se actualizará inmediatamente</small>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Observaciones</label>
+                                <textarea name="observaciones" class="form-control" rows="1" placeholder="Notas adicionales..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if carrito %}
+<div class="fixed-actions-bar">
+    <a href="{% url 'compra_limpiar_carrito' proveedor.id %}" 
+       class="btn btn-outline-warning mr-3"
+       onclick="return confirm('¿Estás seguro de limpiar todo el carrito?');">
+        <i class="icon ion-md-refresh mr-1"></i>Limpiar Carrito
+    </a>
+    
+    <button type="submit" form="form_finalizar_compra_details" class="btn btn-success btn-lg">
+        <i class="icon ion-md-checkmark-circle-outline mr-2"></i>
+        Finalizar y Registrar Compra
+    </button>
+</div>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar-container').classList.toggle('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        const tipo = document.getElementById("tipo_producto");
+        const nuevo = document.getElementById("producto_nuevo_box");
+        const existente = document.getElementById("producto_existente_box");
+        
+        const campoProductoExistente = document.getElementById('select_producto_existente');
+        const camposSoloNuevo = [
+            document.getElementById("id_nombre_producto"),
+            document.getElementById("id_categoria"),
+        ];
+        
+        const toggleBoxes = () => {
+            if (tipo.value === "nuevo") {
+                nuevo.style.display = "block";
+                existente.style.display = "none";
+                
+                camposSoloNuevo.forEach(field => {
+                    if (field) field.setAttribute('required', 'required');
+                });
+                if (campoProductoExistente) {
+                    campoProductoExistente.removeAttribute('required');
+                    campoProductoExistente.value = '';
+                }
+            } else {
+                nuevo.style.display = "none";
+                existente.style.display = "block";
+                
+                camposSoloNuevo.forEach(field => {
+                    if (field) {
+                        field.removeAttribute('required');
+                        field.value = '';
+                    }
+                });
+                if (campoProductoExistente) {
+                    campoProductoExistente.setAttribute('required', 'required');
+                }
+            }
+        };
+
+        toggleBoxes();
+        tipo.addEventListener("change", toggleBoxes);
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var inputFechaVencimiento = document.getElementById('fecha_vencimiento');
+        
+        if (inputFechaVencimiento) {
+            var fechaMinima = new Date();
+            fechaMinima.setFullYear(fechaMinima.getFullYear() + 1);
+
+            var year = fechaMinima.getFullYear();
+            var month = ('0' + (fechaMinima.getMonth() + 1)).slice(-2); 
+            var day = ('0' + fechaMinima.getDate()).slice(-2);
+            
+            var fechaFormateada = year + '-' + month + '-' + day;
+            inputFechaVencimiento.min = fechaFormateada;
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+{% extends 'proveedor/base_prov.html' %}
+
+{% block title %}Lista de Proveedores - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-cube"></i> Gestión de Proveedores
+            </h2>
+            <p class="text-muted">Administra los proveedores del sistema</p>
+        </div>
+
+        <div class="col-md-6 text-right d-flex justify-content-end align-items-center">
+
+    <a href="{% url 'registrar_proveedor' %}" class="btn btn-success btn-compact mr-2">
+        <i class="icon ion-md-add-circle"></i> Nuevo Proveedor
+    </a>
+
+    <a href="{% url 'listar_compras' %}" class="btn btn-primary btn-compact mr-2">
+        <i class="icon ion-md-list"></i> Historial de Compras
+    </a>
+
+    <a href="{% url 'proveedores_pdf' %}" class="btn btn-info btn-compact">
+    <i class="icon ion-md-document"></i> Generar Reporte
+    </a>
+
+
+
+</div>
+    </div>
+
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <select id="prov_seleccion" class="form-control">
+                    <option value="">Selecciona proveedor...</option>
+                    {% for prov in proveedores %}
+                        <option value="{{ prov.id }}">{{ prov.nombre_proveedor }}</option>
+                    {% endfor %}
+                </select>
+
+                <div class="input-group-append">
+                    <button id="btn_compra" class="btn btn-info" disabled
+                            data-url-template="{% url 'crear_compra_proveedor' 0 %}">
+                        <i class="icon ion-md-cart"></i> Compra
+                    </button>
+                </div>
+            </div>
+        </div>
+</div>
+    </div>
+
+    <script>
+      (function(){
+        const sel = document.getElementById('prov_seleccion');
+        const btn = document.getElementById('btn_compra');
+        const PRODUCT_URL_TEMPLATE = "{% url 'productos_por_proveedor' 0 %}";
+
+        sel.addEventListener('change', function(){
+          btn.disabled = !this.value;
+        });
+
+        btn.addEventListener('click', function(){
+          const id = sel.value;
+          if(!id) return;
+          const tmpl = this.getAttribute('data-url-template');
+          const target = tmpl.replace('/0/', '/' + id + '/');
+          window.location.href = target;
+        });
+
+        
+      })();
+
+    </script>
+
+    <!-- Tabla de proveedores -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th>Dirección</th>
+                            <th>NIT</th>
+                            <th>Contacto</th>
+                            <th>Tel. Contacto</th>
+                            <th>Activo</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for p in proveedores %}
+                        <tr>
+                            <td>{{ p.id }}</td>
+                            <td><strong>{{ p.nombre_proveedor }}</strong></td>
+                            <td>{{ p.correo_proveedor }}</td>
+                            <td>{{ p.telefono }}</td>
+                            <td>{{ p.direccion }}</td>
+                            <td>{{ p.nit }}</td>
+                            <td>{{ p.contacto_nombre }}</td>
+                            <td>{{ p.contacto_telefono }}</td>
+
+                            <td>
+                                {% if p.activo %}
+                                    <span class="badge badge-success">Sí</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">No</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <a href="{% url 'editar_proveedor' p.id %}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="icon ion-md-create"></i>
+                                    </a>
+
+                                    <a href="{% url 'crear_compra_proveedor' p.id %}" class="btn btn-sm btn-info" title="Compra">
+                                        <i class="icon ion-md-cart"></i>
+                                    </a>
+
+                                    <a href="{% url 'eliminar_proveedor' p.id %}"
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('¿Seguro que deseas eliminar este proveedor?');"
+                                       title="Eliminar">
+                                        <i class="icon ion-md-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="icon ion-md-alert" style="font-size: 3rem; color: #ccc;"></i>
+                                <p class="text-muted">No se encontraron proveedores</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+<script>
+    $(document).ready(function() {
+    const $proveedorSelect = $('#prov_seleccion');
+    const $productoSelect = $('#producto_compra');
+    const productUrlTemplate = "{% url 'productos_por_proveedor' 0 %}";
+    
+    $proveedorSelect.on('change', function() {
+        const proveedorId = $(this).val();
+        
+        $productoSelect.empty().append('<option value="">Cargando productos...</option>').prop('disabled', true);
+
+        if (proveedorId) {
+
+            const url = productUrlTemplate.replace('0', proveedorId); 
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    $productoSelect.empty();
+                    
+                    if (data.productos && data.productos.length > 0) {
+                        $productoSelect.append('<option value="">Selecciona un producto...</option>');
+                     
+                        $.each(data.productos, function(index, producto) {
+                            $productoSelect.append(
+                                `<option value="${producto.id}">${producto.nombre_producto}</option>`
+                            );
+                        });
+                        $productoSelect.prop('disabled', false); 
+                    } else {
+                        $productoSelect.append('<option value="">No hay productos registrados para este proveedor</option>');
+                    }
+                },
+                error: function() {
+                    $productoSelect.empty().append('<option value="">Error al cargar productos</option>');
+                }
+            });
+        } else {
+           
+            $productoSelect.empty().append('<option value="">Selecciona un proveedor primero...</option>').prop('disabled', true);
+        }
+    });
+
+    
+});
+</script>

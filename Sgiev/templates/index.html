@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romar Natural - Sistema de Gestión Integral</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Ionicons -->
+    <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/styleindex.css' %}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container-nav">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="{% static '/img/logo.png' %}" alt="Logo Romar Natural">
+                </div>
+                <div>
+                    <h1>Romar Natural</h1>
+                    <span class="logo-subtitle">Sistema de Gestión Integral</span>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="#servicios" class="nav-link">Servicios</a>
+                <a href="#contacto" class="nav-link">Contacto</a>
+                <a href="{% url 'login' %}" class="login-btn">
+                    <i class="icon ion-md-log-in"></i> Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section con Carousel -->
+    <section class="hero">
+        <div class="hero-carousel">
+            <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1553531384-397bce1d5f2a?w=1920');">
+                <div class="carousel-overlay"></div>
+                <div class="carousel-content">
+                    <h2 class="hero-title">Sistema de Gestión Empresarial</h2>
+                    <p class="hero-subtitle">Optimiza tus procesos con tecnología de vanguardia</p>
+                    <a href="{% url 'login' %}" class="hero-cta">Comenzar Ahora</a>
+                </div>
+            </div>
+            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1920');">
+                <div class="carousel-overlay"></div>
+                <div class="carousel-content">
+                    <h2 class="hero-title">Control Total de Inventario</h2>
+                    <p class="hero-subtitle">Gestiona tu stock en tiempo real</p>
+                    <a href="{% url 'login' %}" class="hero-cta">Descubre Más</a>
+                </div>
+            </div>
+            <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1920');">
+                <div class="carousel-overlay"></div>
+                <div class="carousel-content">
+                    <h2 class="hero-title">Reportes Inteligentes</h2>
+                    <p class="hero-subtitle">Toma decisiones basadas en datos</p>
+                    <a href="{% url 'login' %}" class="hero-cta">Ver Demo</a>
+                </div>
+            </div>
+        </div>
+        <div class="carousel-indicators">
+            <span class="indicator active" data-slide="0"></span>
+            <span class="indicator" data-slide="1"></span>
+            <span class="indicator" data-slide="2"></span>
+        </div>
+    </section>
+
+    <!-- Características Destacadas -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">¿Por qué elegir Romar Natural?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="icon ion-md-speedometer"></i>
+                    </div>
+                    <h3>Rápido y Eficiente</h3>
+                    <p>Procesamiento en tiempo real para agilizar tus operaciones</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="icon ion-md-lock"></i>
+                    </div>
+                    <h3>Seguro</h3>
+                    <p>Protección de datos con tecnología de encriptación avanzada</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="icon ion-md-analytics"></i>
+                    </div>
+                    <h3>Análisis Avanzado</h3>
+                    <p>Reportes detallados para tomar mejores decisiones</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="icon ion-md-phone-portrait"></i>
+                    </div>
+                    <h3>Responsive</h3>
+                    <p>Accede desde cualquier dispositivo, en cualquier momento</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Catálogo de Servicios -->
+    <section class="catalogo" id="servicios">
+        <div class="container">
+            <h2 class="section-title">Nuestros Servicios</h2>
+            <div class="servicios-grid">
+                <!-- Card 1: Gestión de Inventario -->
+                <div class="card">
+                    <div class="image-box">
+                        <img src="https://images.pexels.com/photos/7019213/pexels-photo-7019213.jpeg" alt="Inventario">
+                    </div>
+                    <div class="content">
+                        <i class="icon ion-md-cube"></i>
+                        <h2>Gestión de Inventario</h2>
+                        <p>Control total de productos, stock y movimientos en tiempo real</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Ventas -->
+                <div class="card">
+                    <div class="image-box">
+                        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop" alt="Ventas">
+                    </div>
+                    <div class="content">
+                        <i class="icon ion-md-cart"></i>
+                        <h2>Ventas</h2>
+                        <p>Registro y seguimiento completo de todas tus ventas</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: Proveedores -->
+                <div class="card">
+                    <div class="image-box">
+                        <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=600&h=400&fit=crop" alt="Proveedores">
+                    </div>
+                    <div class="content">
+                        <i class="icon ion-md-people"></i>
+                        <h2>Proveedores</h2>
+                        <p>Gestión de compras y control de proveedores</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: Reportes -->
+                <div class="card">
+                    <div class="image-box">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop" alt="Reportes">
+                    </div>
+                    <div class="content">
+                        <i class="icon ion-md-stats"></i>
+                        <h2>Reportes</h2>
+                        <p>Análisis detallados y reportes personalizados</p>
+                    </div>
+                </div>
+
+                <!-- Card 5: Envíos -->
+                <div class="card">
+                    <div class="image-box">
+                        <img src="https://images.pexels.com/photos/5025654/pexels-photo-5025654.jpeg" alt="Envíos">
+                    </div>
+                    <div class="content">
+                        <i class="icon ion-md-bicycle"></i>
+                        <h2>Envíos</h2>
+                        <p>Seguimiento de envíos y gestión de mensajería</p>
+                    </div>
+                </div>
+
+                <!-- Card 6: Control de Usuarios -->
+                <div class="card">
+                    <div class="image-box">
+                        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop" alt="Usuarios">
+                    </div>
+                    <div class="content">
+                        <i class="icon ion-md-contacts"></i>
+                        <h2>Control de Usuarios</h2>
+                        <p>Administración de roles y permisos del sistema</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estadísticas -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3 class="stat-number" data-target="500">0</h3>
+                    <p>Ventas Procesadas</p>
+                </div>
+                <div class="stat-item">
+                    <h3 class="stat-number" data-target="1200">0</h3>
+                    <p>Productos Gestionados</p>
+                </div>
+                <div class="stat-item">
+                    <h3 class="stat-number" data-target="50">0</h3>
+                    <p>Usuarios Activos</p>
+                </div>
+                <div class="stat-item">
+                    <h3 class="stat-number" data-target="99">0</h3>
+                    <p>% Satisfacción</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mapa de Contacto -->
+    <section class="map-section" id="contacto">
+        <div class="container">
+            <h2 class="section-title">Encuéntranos</h2>
+            <div class="map-container">
+                <!-- Reemplaza con tu dirección real -->
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.8262095836875!2d-74.07985068523683!3d4.624335596625804!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9a3b1d5d5d5d%3A0x1d5d5d5d5d5d5d5d!2sBogot%C3%A1%2C%20Colombia!5e0!3m2!1ses!2sco!4v1234567890123!5m2!1ses!2sco" 
+                    width="100%" 
+                    height="450" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Romar Natural</h3>
+                    <p>Sistema integral de gestión empresarial para optimizar tus procesos y aumentar la productividad.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Enlaces Rápidos</h4>
+                    <ul>
+                        <li><a href="#servicios">Servicios</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                        <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contacto</h4>
+                    <ul class="contact-info">
+                        <li><i class="icon ion-md-call"></i> 305 361 5676</li>
+                        <li><i class="icon ion-md-mail"></i> lmrc03@hotmail.com</li>
+                        <li><i class="icon ion-md-pin"></i> Bogotá, Colombia</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Síguenos</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="icon ion-logo-facebook"></i></a>
+                        <a href="#"><i class="icon ion-logo-instagram"></i></a>
+                        <a href="#"><i class="icon ion-logo-twitter"></i></a>
+                        <a href="#"><i class="icon ion-logo-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Romar Natural. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{% static 'js/index.js' %}"></script>
+</body>
+</html>

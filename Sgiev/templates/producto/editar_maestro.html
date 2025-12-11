@@ -1,0 +1,363 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Editar Producto Maestro - Romar Natural</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        :root {
+            --primary: #3d862e;
+            --light: #ffffff;
+            --grey: #efefef;
+        }
+        
+        body {
+            font-family: 'Mulish', sans-serif;
+        }
+        
+        .badge-admin {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-operario {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2d6621;
+            border-color: #2d6621;
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar-container {
+                position: fixed;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                height: 100vh;
+            }
+            
+            #sidebar-container.active {
+                left: 0;
+            }
+            
+            .menu-toggle {
+                display: block !important;
+            }
+        }
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 999;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .role-badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="icon ion-md-menu"></i>
+    </button>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div id="sidebar-container" class="bg-primary">
+            <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+            <div class="menu">
+                <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
+                {% if es_admin %}
+                <a href="{% url 'usuarios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-contacts mr-2 lead"></i>Usuarios</a>
+                {% endif %}
+                <a href="{% url 'listar_proveedores' %}" class="d-block text-light p-3"><i class="icon ion-md-cube mr-2 lead"></i>Proveedores</a>
+                <a href="{% url 'ventas_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-cart mr-2 lead"></i>Ventas</a>
+                <a href="{% url 'list_categoria' %}" class="d-block text-light p-3"><i class="icon ion-md-copy mr-2 lead"></i>Categoría</a>
+                <a href="{% url 'list_producto' %}" class="d-block text-light p-3"><i class="icon ion-md-folder mr-2 lead"></i>Inventario</a>
+                <a href="{% url 'envios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bicycle mr-2 lead"></i>Envíos</a>
+                {% if es_admin %}
+                <a href="{% url 'mensajeria_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bus mr-2 lead"></i>Mensajería</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="w-100">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                                    {{ usuario.p_nombre }} {{ usuario.p_apellido }}
+                                    <span class="role-badge {% if es_admin %}badge-admin{% else %}badge-operario{% endif %}">
+                                        {{ usuario.tipo_usu|title }}
+                                    </span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="{% url 'perfil_usuario' %}">
+                                        <i class="icon ion-md-person mr-2"></i>Mi perfil
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="icon ion-md-log-out mr-2"></i>Cerrar Sesión
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div id="content" class="p-4">
+                <h2 class="mb-4"><i class="icon ion-md-pricetag mr-2 text-success"></i>Editar Producto Maestro y Precio de Venta</h2>
+                
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-warning">
+                    <i class="icon ion-md-warning mr-2"></i>
+                    <strong>Importante:</strong> Los cambios en precio de venta y margen se aplicarán a TODOS los lotes de este producto.
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Información General del Producto</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Nombre del Producto *</label>
+                                        <input type="text" class="form-control" name="nombre_producto" 
+                                               value="{{ producto.nombre_producto }}" required maxlength="100">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Categoría *</label>
+                                        <select class="form-control" name="categoria_idcategoria" required>
+                                            {% for cat in categorias %}
+                                            <option value="{{ cat.id }}" {% if cat.id == producto.categoria_idcategoria.id %}selected{% endif %}>
+                                                {{ cat.nombre_categoria }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Descripción</label>
+                                        <textarea class="form-control" name="descripcion_producto" rows="2" maxlength="255">{{ producto.descripcion_producto }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Proveedor *</label>
+                                        <select class="form-control" name="proveedor_idproveedor" required>
+                                            {% for prov in proveedores %}
+                                            <option value="{{ prov.id }}" {% if prov.id == producto.proveedor_idproveedor.id %}selected{% endif %}>
+                                                {{ prov.nombre_proveedor }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Registro Sanitario</label>
+                                        <input type="text" class="form-control" name="registrosanitario" 
+                                               value="{{ producto.registrosanitario }}" maxlength="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="icon ion-md-cash mr-2"></i>Precios y Margen</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Precio de Compra (Referencia)</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                            <input type="number" step="0.01" class="form-control" name="precio_compra" 
+                                                   value="{{ producto.precio_compra }}" min="0" readonly>
+                                        </div>
+                                        <small class="form-text text-muted">Se actualiza automáticamente al comprar</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Precio de Venta * <span class="text-danger">⬤</span></label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                            <input type="number" step="0.01" class="form-control" name="precio_venta" 
+                                                   value="{{ producto.precio_venta }}" min="0" required id="precio_venta">
+                                        </div>
+                                        <small class="form-text text-muted">Precio al que se vende al cliente</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Margen de Ganancia (%)</label>
+                                        <input type="text" class="form-control bg-light" value="{{ producto.margen_ganancia }}%" readonly id="margen_display">
+                                        <small class="form-text text-muted">Se calcula automáticamente</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-2">
+                                <i class="icon ion-md-information-circle mr-2"></i>
+                                <strong>Tip:</strong> El margen de ganancia se calcula como: de>((Precio Venta - Precio Compra) / Precio Compra) × 100</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Límites de Stock (Referencia)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Stock Mínimo</label>
+                                        <input type="number" class="form-control" name="stock_minimo" 
+                                               value="{{ producto.stock_minimo }}" min="0">
+                                        <small class="form-text text-muted">Alerta cuando el stock total esté por debajo de este valor</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Stock Máximo</label>
+                                        <input type="number" class="form-control" name="stock_maximo" 
+                                               value="{{ producto.stock_maximo }}" min="0">
+                                        <small class="form-text text-muted">Referencia para compras</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 mb-5">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="icon ion-md-checkmark-circle mr-2"></i>Guardar Cambios
+                        </button>
+                        <a href="{% url 'list_producto' %}" class="btn btn-secondary btn-lg">
+                            <i class="icon ion-md-close-circle mr-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar-container').classList.toggle('active');
+        }
+
+        // Calcular margen automáticamente
+        const precioVentaInput = document.getElementById('precio_venta');
+        const margenDisplay = document.getElementById('margen_display');
+        const precioCompra = parseFloat('{{ producto.precio_compra }}') || 0;
+
+        function calcularMargen() {
+            const precioVenta = parseFloat(precioVentaInput.value) || 0;
+            
+            if (precioCompra > 0 && precioVenta > 0) {
+                const margen = ((precioVenta - precioCompra) / precioCompra) * 100;
+                margenDisplay.value = margen.toFixed(2) + '%';
+                
+                // Cambiar color según margen
+                if (margen < 0) {
+                    margenDisplay.classList.add('text-danger');
+                    margenDisplay.classList.remove('text-success', 'text-warning');
+                } else if (margen < 20) {
+                    margenDisplay.classList.add('text-warning');
+                    margenDisplay.classList.remove('text-success', 'text-danger');
+                } else {
+                    margenDisplay.classList.add('text-success');
+                    margenDisplay.classList.remove('text-danger', 'text-warning');
+                }
+            } else {
+                margenDisplay.value = '0.00%';
+                margenDisplay.classList.remove('text-success', 'text-danger', 'text-warning');
+            }
+        }
+
+        precioVentaInput.addEventListener('input', calcularMargen);
+        
+        // Calcular al cargar
+        calcularMargen();
+
+        // Cerrar sidebar al hacer click fuera (móvil)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar-container');
+            const toggleBtn = document.querySelector('.menu-toggle');
+            if (window.innerWidth <= 768 && sidebar && toggleBtn) {
+                if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

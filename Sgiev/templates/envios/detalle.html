@@ -1,0 +1,141 @@
+{% extends 'envios/base_envios.html' %}
+
+{% block title %}Detalle Envío - {{ envio.venta_idfactura.numero_factura }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-bicycle"></i> Detalle del Envío
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'envios_listar' %}">Envíos</a></li>
+                    <li class="breadcrumb-item active">Detalle</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{% url 'envios_editar' envio.id %}" class="btn btn-warning">
+                <i class="icon ion-md-create"></i> Editar
+            </a>
+            {% if es_admin %}
+            <a href="{% url 'envios_eliminar' envio.id %}" class="btn btn-danger" onclick="return confirm('¿Eliminar este envío?')">
+                <i class="icon ion-md-trash"></i> Eliminar
+            </a>
+            {% endif %}
+            <a href="{% url 'envios_listar' %}" class="btn btn-secondary">
+                <i class="icon ion-md-arrow-back"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-information-circle"></i> Información General</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Factura</small>
+                            <p class="font-weight-bold">{{ envio.venta_idfactura.numero_factura }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Estado</small>
+                            <p>
+                                {% if envio.estado_envio == 'pendiente' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% elif envio.estado_envio == 'en_transito' %}
+                                    <span class="badge badge-info">En Tránsito</span>
+                                {% elif envio.estado_envio == 'entregado' %}
+                                    <span class="badge badge-success">Entregado</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Devuelto</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Fecha de Envío</small>
+                            <p class="font-weight-bold">{{ envio.fecha_envio|date:"d/m/Y" }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Fecha de Entrega</small>
+                            <p class="font-weight-bold">{{ envio.fecha_entrega|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted">Responsable</small>
+                        <p class="font-weight-bold">{{ envio.usuarios_id_usuario.nombre_completo }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-bus"></i> Empresa de Mensajería</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="font-weight-bold">{{ envio.fk_mensajeria.nombre_mensajeria }}</h6>
+                    <p class="mb-1"><i class="icon ion-md-call"></i> {{ envio.fk_mensajeria.tel_mensajeria }}</p>
+                    <p class="mb-1"><i class="icon ion-md-pin"></i> {{ envio.fk_mensajeria.direccion_mensajeria }}</p>
+                    <p class="mb-0"><span class="badge badge-info">{{ envio.fk_mensajeria.cobertura }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-navigate"></i> Direcciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="font-weight-bold text-success">
+                            <i class="icon ion-md-arrow-up"></i> Dirección de Salida
+                        </h6>
+                        <p class="ml-4">{{ envio.direccion_salida }}</p>
+                    </div>
+
+                    <div>
+                        <h6 class="font-weight-bold text-primary">
+                            <i class="icon ion-md-arrow-down"></i> Dirección de Destino
+                        </h6>
+                        <p class="ml-4">{{ envio.direccion_envio }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if envio.observaciones or envio.novedades %}
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="icon ion-md-document-text"></i> Observaciones y Novedades</h5>
+                </div>
+                <div class="card-body">
+                    {% if envio.observaciones %}
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Observaciones</h6>
+                        <p>{{ envio.observaciones }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if envio.novedades %}
+                    <div>
+                        <h6 class="font-weight-bold">Novedades</h6>
+                        <p>{{ envio.novedades }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

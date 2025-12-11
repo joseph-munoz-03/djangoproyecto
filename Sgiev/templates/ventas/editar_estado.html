@@ -1,0 +1,251 @@
+{% extends 'usuarios/base_usuarios.html' %}
+
+{% block title %}Editar Estado de Venta - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-create"></i> Editar Venta {{ venta.numero_factura }}
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'ventas_listar' %}">Ventas</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'ventas_detalle' venta.id %}">{{ venta.numero_factura }}</a></li>
+                    <li class="breadcrumb-item active">Editar</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <!-- Información de la Venta -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-information-circle"></i> Información de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Factura:</strong> {{ venta.numero_factura }}</p>
+                            <p><strong>Fecha:</strong> {{ venta.fecha_factura|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Vendedor:</strong> {{ venta.usuarios_id_usuario.nombre_completo }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Estado Actual:</strong> 
+                                {% if venta.estado_pago == 'pagado' %}
+                                    <span class="badge badge-success">{{ venta.get_estado_pago_display }}</span>
+                                {% elif venta.estado_pago == 'parcial' %}
+                                    <span class="badge badge-warning">{{ venta.get_estado_pago_display }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ venta.get_estado_pago_display }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Método de Pago:</strong> {{ venta.get_metodo_pago_display }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen Financiero -->
+            <div class="card mb-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-cash"></i> Resumen Financiero</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Subtotal:</strong></td>
+                                <td class="text-right">${{ venta.subtotal|floatformat:0 }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Descuento:</strong></td>
+                                <td class="text-right text-danger">-${{ venta.descuento|floatformat:0 }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>IVA (19%):</strong></td>
+                                <td class="text-right">${{ venta.iva|floatformat:0 }}</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td><strong>TOTAL:</strong></td>
+                                <td class="text-right"><h4 class="mb-0">${{ venta.valor_total|floatformat:0 }}</h4></td>
+                            </tr>
+                            <tr class="bg-light">
+                                <td><strong>Abonado:</strong></td>
+                                <td class="text-right text-success"><strong>${{ venta.abono|floatformat:0 }}</strong></td>
+                            </tr>
+                            <tr class="bg-light">
+                                <td><strong>Saldo Pendiente:</strong></td>
+                                <td class="text-right {% if venta.saldo_pendiente > 0 %}text-danger{% else %}text-success{% endif %}">
+                                    <strong>${{ venta.saldo_pendiente|floatformat:0 }}</strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {% if venta.estado_pago != 'pagado' %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="icon ion-md-alert"></i> 
+                        <strong>Saldo por pagar:</strong> ${{ venta.saldo_pendiente|floatformat:0 }}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mt-3">
+                        <i class="icon ion-md-checkmark-circle"></i> 
+                        <strong>Venta completamente pagada</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulario de Edición -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="icon ion-md-create"></i> Actualizar Información</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% if venta.estado_pago != 'pagado' %}
+                        <!-- Sección de Abono -->
+                        <h6 class="border-bottom pb-2 mb-3">Registrar Nuevo Abono</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.nuevo_abono.id_for_label }}">{{ form.nuevo_abono.label }} *</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        {{ form.nuevo_abono }}
+                                    </div>
+                                    <small class="form-text text-muted">{{ form.nuevo_abono.help_text }}</small>
+                                    {% if form.nuevo_abono.errors %}
+                                        <div class="text-danger small">{{ form.nuevo_abono.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Estado Resultante</label>
+                                    <input type="text" class="form-control bg-light" value="Se calculará automáticamente" readonly>
+                                    <small class="form-text text-muted">
+                                        {% if venta.saldo_pendiente > 0 %}
+                                            Ingrese ${{ venta.saldo_pendiente|floatformat:0 }} para completar el pago
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        {% endif %}
+
+                        <!-- Información del Cliente -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Datos del Cliente</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.nombre_cliente.id_for_label }}">{{ form.nombre_cliente.label }}</label>
+                                {{ form.nombre_cliente }}
+                                {% if form.nombre_cliente.errors %}
+                                    <div class="text-danger small">{{ form.nombre_cliente.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.correo_cliente.id_for_label }}">{{ form.correo_cliente.label }}</label>
+                                {{ form.correo_cliente }}
+                                {% if form.correo_cliente.errors %}
+                                    <div class="text-danger small">{{ form.correo_cliente.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.telefono_cliente.id_for_label }}">{{ form.telefono_cliente.label }}</label>
+                                {{ form.telefono_cliente }}
+                                {% if form.telefono_cliente.errors %}
+                                    <div class="text-danger small">{{ form.telefono_cliente.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.direccion_cliente.id_for_label }}">{{ form.direccion_cliente.label }}</label>
+                                {{ form.direccion_cliente }}
+                                {% if form.direccion_cliente.errors %}
+                                    <div class="text-danger small">{{ form.direccion_cliente.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Observaciones</h6>
+                        <div class="form-group">
+                            <label for="{{ form.observaciones.id_for_label }}">{{ form.observaciones.label }}</label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                                <div class="text-danger small">{{ form.observaciones.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="icon ion-md-checkmark"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'ventas_detalle' venta.id %}" class="btn btn-secondary btn-lg">
+                                <i class="icon ion-md-close"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Calcular estado automáticamente según el abono
+    const inputNuevoAbono = document.querySelector('input[name="nuevo_abono"]');
+    const saldoPendiente = parseFloat('{{ venta.saldo_pendiente }}');
+    const abonoActual = parseFloat('{{ venta.abono }}');
+    
+    if (inputNuevoAbono) {
+        inputNuevoAbono.addEventListener('input', function() {
+            const nuevoAbono = parseFloat(this.value) || 0;
+            const totalAbonado = abonoActual + nuevoAbono;
+            const nuevoSaldo = saldoPendiente - nuevoAbono;
+            
+            let mensaje = '';
+            let clase = '';
+            
+            if (nuevoAbono > saldoPendiente) {
+                mensaje = 'El abono excede el saldo pendiente';
+                clase = 'text-danger';
+                this.classList.add('border-danger');
+            } else if (nuevoAbono === saldoPendiente) {
+                mensaje = 'Estado: PAGADO (venta completada)';
+                clase = 'text-success font-weight-bold';
+                this.classList.remove('border-danger');
+                this.classList.add('border-success');
+            } else if (nuevoAbono > 0) {
+                mensaje = `Estado: PARCIAL (Nuevo saldo: $${nuevoSaldo.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")})`;
+                clase = 'text-warning font-weight-bold';
+                this.classList.remove('border-danger', 'border-success');
+            } else {
+                mensaje = 'Se calculará automáticamente';
+                clase = '';
+                this.classList.remove('border-danger', 'border-success');
+            }
+            
+            const estadoInput = this.closest('.row').querySelector('input[readonly]');
+            if (estadoInput) {
+                estadoInput.value = mensaje;
+                estadoInput.className = 'form-control bg-light ' + clase;
+            }
+        });
+    }
+</script>
+{% endblock %}

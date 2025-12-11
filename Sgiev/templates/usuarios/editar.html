@@ -1,0 +1,187 @@
+{% extends 'usuarios/base_usuarios.html' %}
+
+{% block title %}Editar Usuario - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-create"></i> Editar Usuario
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'usuarios_listar' %}">Usuarios</a></li>
+                    <li class="breadcrumb-item active">Editar: {{ usuario_editando.nombre_completo }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="icon ion-md-document"></i> Editar Información de Usuario
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Información Personal -->
+                        <h6 class="border-bottom pb-2 mb-3">Información Personal</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.num_identificacion.id_for_label }}">{{ form.num_identificacion.label }} *</label>
+                                {{ form.num_identificacion }}
+                                {% if form.num_identificacion.errors %}
+                                    <div class="text-danger small">{{ form.num_identificacion.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.tipo_usu.id_for_label }}">{{ form.tipo_usu.label }} *</label>
+                                {{ form.tipo_usu }}
+                                {% if form.tipo_usu.errors %}
+                                    <div class="text-danger small">{{ form.tipo_usu.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.p_nombre.id_for_label }}">{{ form.p_nombre.label }} *</label>
+                                {{ form.p_nombre }}
+                                {% if form.p_nombre.errors %}
+                                    <div class="text-danger small">{{ form.p_nombre.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.s_nombre.id_for_label }}">{{ form.s_nombre.label }}</label>
+                                {{ form.s_nombre }}
+                                {% if form.s_nombre.errors %}
+                                    <div class="text-danger small">{{ form.s_nombre.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.p_apellido.id_for_label }}">{{ form.p_apellido.label }} *</label>
+                                {{ form.p_apellido }}
+                                {% if form.p_apellido.errors %}
+                                    <div class="text-danger small">{{ form.p_apellido.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.s_apellido.id_for_label }}">{{ form.s_apellido.label }}</label>
+                                {{ form.s_apellido }}
+                                {% if form.s_apellido.errors %}
+                                    <div class="text-danger small">{{ form.s_apellido.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Información de Contacto -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Información de Contacto</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.correo.id_for_label }}">{{ form.correo.label }} *</label>
+                                {{ form.correo }}
+                                {% if form.correo.errors %}
+                                    <div class="text-danger small">{{ form.correo.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }} *</label>
+                                {{ form.telefono }}
+                                {% if form.telefono.errors %}
+                                    <div class="text-danger small">{{ form.telefono.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.direccion.id_for_label }}">{{ form.direccion.label }} *</label>
+                            {{ form.direccion }}
+                            {% if form.direccion.errors %}
+                                <div class="text-danger small">{{ form.direccion.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Información Laboral -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Información Laboral</h6>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.salario.id_for_label }}">{{ form.salario.label }} *</label>
+                                {{ form.salario }}
+                                {% if form.salario.errors %}
+                                    <div class="text-danger small">{{ form.salario.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.fecha_nacimiento.id_for_label }}">{{ form.fecha_nacimiento.label }} *</label>
+                                {{ form.fecha_nacimiento }}
+                                {% if form.fecha_nacimiento.errors %}
+                                    <div class="text-danger small">{{ form.fecha_nacimiento.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.activo.id_for_label }}">{{ form.activo.label }} *</label>
+                            {{ form.activo }}
+                            {% if form.activo.errors %}
+                                <div class="text-danger small">{{ form.activo.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Cambiar Contraseña (Opcional) -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Cambiar Contraseña (Opcional)</h6>
+                        <div class="alert alert-info">
+                            <i class="icon ion-md-information-circle"></i>
+                            Deja los campos de contraseña vacíos si no deseas cambiarla
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                                {{ form.password }}
+                                {% if form.password.errors %}
+                                    <div class="text-danger small">{{ form.password.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="{{ form.password_confirm.id_for_label }}">{{ form.password_confirm.label }}</label>
+                                {{ form.password_confirm }}
+                                {% if form.password_confirm.errors %}
+                                    <div class="text-danger small">{{ form.password_confirm.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Errores generales -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones -->
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-warning text-white">
+                                <i class="icon ion-md-checkmark"></i> Actualizar Usuario
+                            </button>
+                            <a href="{% url 'usuarios_listar' %}" class="btn btn-secondary">
+                                <i class="icon ion-md-close"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

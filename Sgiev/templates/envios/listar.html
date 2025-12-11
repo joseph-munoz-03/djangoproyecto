@@ -1,0 +1,273 @@
+{% extends 'envios/base_envios.html' %}
+
+{% block title %}Lista de Envíos - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-bicycle"></i> Gestión de Envíos
+            </h2>
+            <p class="text-muted">
+                {% if es_admin %}Todos los envíos del sistema{% else %}Mis envíos registrados{% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-right">
+            <a href="{% url 'envios_crear' %}" class="btn btn-primary">
+                <i class="icon ion-md-add-circle"></i> Nuevo Envío
+            </a>
+        </div>
+    </div>
+
+    <!-- ============ SECCIÓN: VENTAS PENDIENTES DE ENVÍO ============ -->
+    {% if total_pendientes > 0 %}
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="icon ion-md-alert"></i> Ventas Pendientes de Asignar Envío
+                    <span class="badge badge-light text-warning">{{ total_pendientes }}</span>
+                </h5>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filtro independiente para ventas pendientes -->
+            <form method="get" class="mb-3">
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <label>Buscar por Número de Factura</label>
+                        <input type="text" 
+                               name="search_pendientes" 
+                               class="form-control" 
+                               placeholder="Ej: FAC-00001" 
+                               value="{{ search_pendientes }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-warning btn-block">
+                            <i class="icon ion-md-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+                <!-- Mantener filtros de envíos -->
+                {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
+                {% if estado %}<input type="hidden" name="estado" value="{{ estado }}">{% endif %}
+            </form>
+
+            <!-- Tabla de ventas pendientes -->
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha Venta</th>
+                            <th>Vendedor</th>
+                            <th>Total</th>
+                            <th>Estado Pago</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in ventas_pendientes_obj %}
+                        <tr>
+                            <td><strong>{{ venta.numero_factura }}</strong></td>
+                            <td>{{ venta.fecha_factura|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {{ venta.usuarios_id_usuario.nombre_completo }}
+                                {% if venta.usuarios_id_usuario.id == usuario.id %}
+                                    <span class="badge badge-info badge-sm">Tú</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ venta.valor_total|floatformat:0 }}</td>
+                            <td>
+                                {% if venta.estado_pago == 'pagado' %}
+                                    <span class="badge badge-success badge-sm">Pagado</span>
+                                {% elif venta.estado_pago == 'pendiente' %}
+                                    <span class="badge badge-danger badge-sm">Pendiente</span>
+                                {% else %}
+                                    <span class="badge badge-warning badge-sm">Parcial</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'envios_crear' %}?venta_id={{ venta.id }}" 
+                                   class="btn btn-sm btn-success" 
+                                   title="Crear envío">
+                                    <i class="icon ion-md-add"></i> Crear Envío
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                {% if search_pendientes %}
+                                    No se encontraron ventas con ese número de factura
+                                {% else %}
+                                    No hay ventas pendientes de asignar envío
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación de ventas pendientes -->
+            {% if ventas_pendientes_obj.has_other_pages %}
+            <nav class="mt-3">
+                <ul class="pagination pagination-sm justify-content-center">
+                    {% if ventas_pendientes_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page_pendientes={{ ventas_pendientes_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if search_pendientes %}&search_pendientes={{ search_pendientes }}{% endif %}">Anterior</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ ventas_pendientes_obj.number }} de {{ ventas_pendientes_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if ventas_pendientes_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page_pendientes={{ ventas_pendientes_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if search_pendientes %}&search_pendientes={{ search_pendientes }}{% endif %}">Siguiente</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============ SECCIÓN: ENVÍOS REGISTRADOS ============ -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="icon ion-md-bicycle"></i> Envíos Registrados</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end mb-3">
+                <div class="col-md-5 mb-2">
+                    <label>Buscar</label>
+                    <input type="text" name="search" class="form-control" placeholder="Factura, dirección o mensajería..." value="{{ search }}">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Estado</label>
+                    <select name="estado" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="pendiente" {% if estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="en_transito" {% if estado == 'en_transito' %}selected{% endif %}>En Tránsito</option>
+                        <option value="entregado" {% if estado == 'entregado' %}selected{% endif %}>Entregado</option>
+                        <option value="devuelto" {% if estado == 'devuelto' %}selected{% endif %}>Devuelto</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon ion-md-search"></i> Filtrar
+                    </button>
+                    {% if search or estado %}
+                    <a href="{% url 'envios_listar' %}" class="btn btn-outline-secondary">
+                        <i class="icon ion-md-close"></i> Limpiar
+                    </a>
+                    {% endif %}
+                </div>
+                <!-- Mantener búsqueda de pendientes -->
+                {% if search_pendientes %}<input type="hidden" name="search_pendientes" value="{{ search_pendientes }}">{% endif %}
+            </form>
+
+            <div class="mb-2">
+                <span class="text-muted">
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} envíos
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Factura</th>
+                            <th>Mensajería</th>
+                            <th>Destino</th>
+                            <th>Fecha Envío</th>
+                            <th>Fecha Entrega</th>
+                            <th>Estado</th>
+                            <th>Responsable</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for envio in page_obj %}
+                        <tr>
+                            <td><strong>{{ envio.venta_idfactura.numero_factura }}</strong></td>
+                            <td>{{ envio.fk_mensajeria.nombre_mensajeria }}</td>
+                            <td>{{ envio.direccion_envio|truncatewords:5 }}</td>
+                            <td>{{ envio.fecha_envio|date:"d/m/Y" }}</td>
+                            <td>{{ envio.fecha_entrega|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if envio.estado_envio == 'pendiente' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% elif envio.estado_envio == 'en_transito' %}
+                                    <span class="badge badge-info">En Tránsito</span>
+                                {% elif envio.estado_envio == 'entregado' %}
+                                    <span class="badge badge-success">Entregado</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Devuelto</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ envio.usuarios_id_usuario.nombre_completo }}
+                                {% if envio.usuarios_id_usuario.id == usuario.id %}
+                                    <span class="badge badge-info badge-sm">Tú</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'envios_detalle' envio.id %}" class="btn btn-sm btn-info" title="Ver">
+                                        <i class="icon ion-md-eye"></i>
+                                    </a>
+                                    <a href="{% url 'envios_editar' envio.id %}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="icon ion-md-create"></i>
+                                    </a>
+                                    {% if es_admin %}
+                                    <a href="{% url 'envios_eliminar' envio.id %}" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Eliminar este envío?')">
+                                        <i class="icon ion-md-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="icon ion-md-alert" style="font-size: 3rem; color: #ccc;"></i>
+                                <p class="text-muted">No hay envíos registrados</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación de envíos -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if search_pendientes %}&search_pendientes={{ search_pendientes }}{% endif %}">Anterior</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if search_pendientes %}&search_pendientes={{ search_pendientes }}{% endif %}">Siguiente</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

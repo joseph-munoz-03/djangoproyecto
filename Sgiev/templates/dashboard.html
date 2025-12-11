@@ -1,0 +1,646 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <title>Dashboard - {{ usuario.p_nombre }}</title>
+  <style>
+    /* Sidebar Responsive */
+    @media (max-width: 768px) {
+      #sidebar-container { 
+        position: fixed; 
+        left: -100%; 
+        transition: left 0.3s ease; 
+        z-index: 1000; 
+        height: 100vh;
+        width: 250px;
+      }
+      #sidebar-container.active { left: 0; }
+      .menu-toggle { display: block !important; }
+      
+      /* Reducir padding en móvil */
+      #content { padding: 0 !important; }
+      .container { padding-left: 10px; padding-right: 10px; }
+      
+      /* Header móvil */
+      h1 { font-size: 1.5rem !important; }
+      .lead { font-size: 0.9rem !important; }
+      
+      /* Tarjetas de estadísticas */
+      .stat { margin-bottom: 15px; }
+      .stat h3 { font-size: 1.5rem; }
+      .stat h6 { font-size: 0.75rem; }
+      
+      /* Ocultar texto largo en móvil */
+      .text-hide-mobile { display: none; }
+      
+      /* Botones más grandes en móvil */
+      .btn { padding: 10px 15px; font-size: 14px; }
+    
+      /* Alertas más compactas */
+      .alerta-stock, .alerta-envio { 
+        padding: 8px; 
+        font-size: 0.85rem; 
+        margin-bottom: 8px; 
+      }
+      
+      /* Tabla más compacta */
+      .table { font-size: 0.85rem; }
+      .table td, .table th { padding: 8px 5px; }
+      
+      /* Iconos más pequeños en móvil */
+      .icon { font-size: 18px !important; }
+    }
+    
+    /* Estilos generales */
+    .menu-toggle { 
+      display: none; 
+      position: fixed; 
+      top: 70px;
+      left: 15px; 
+      z-index: 900;
+      background: #3d862e; 
+      color: white; 
+      border: none; 
+      padding: 10px 15px; 
+      border-radius: 5px; 
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .role-badge { 
+      font-size: 0.75rem; 
+      padding: 3px 10px; 
+      border-radius: 12px; 
+      margin-left: 5px; 
+    }
+    
+    .badge-admin { 
+      background-color: #dc3545; 
+      color: white; 
+    }
+    
+    .badge-operario { 
+      background-color: #ffc107; 
+      color: #333; 
+    }
+    
+    .alerta-stock { 
+      background-color: #fff3cd; 
+      border-left: 4px solid #ffc107; 
+      padding: 10px; 
+      margin-bottom: 10px; 
+      border-radius: 5px; 
+    }
+    
+    .alerta-envio { 
+      background-color: #d1ecf1; 
+      border-left: 4px solid #17a2b8; 
+      padding: 10px; 
+      margin-bottom: 10px; 
+      border-radius: 5px; 
+    }
+    
+    .stat-card { 
+      transition: transform 0.3s;
+      width: 100%;
+    }
+    
+    .stat-card:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+    }
+    /* Gráfico responsive - NUEVO */
+#myChart {
+  max-height: 400px;
+  width: 100% !important;
+  height: auto !important;
+}
+
+@media (max-width: 768px) {
+  #myChart {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 576px) {
+  #myChart {
+    max-height: 200px;
+  }
+}
+    /* Overlay para cerrar sidebar */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    
+    .sidebar-overlay.active {
+      display: block;
+    }
+    
+  /* Z-index para navbar */
+.navbar { 
+  position: sticky;
+  top: 0;
+  z-index: 1050;
+  background-color: #f8f9fa !important;
+}
+
+    /* Mejorar legibilidad en móvil pequeño */
+    @media (max-width: 576px) {
+      .card-header h6 { 
+        font-size: 0.9rem; 
+      }
+      
+      .navbar-brand { 
+        font-size: 1rem; 
+      }
+      
+      /* Envíos en columna única en móvil */
+      .envios-stats .col-6 { 
+        flex: 0 0 50%; 
+        max-width: 50%;
+      }
+      
+      /* Ajustar botón en pantallas muy pequeñas */
+      .menu-toggle {
+        top: 60px;
+        padding: 8px 12px;
+      }
+    }
+</style>
+
+</head>
+<body>
+  <button class="menu-toggle" onclick="toggleSidebar()">
+    <i class="icon ion-md-menu"></i>
+  </button>
+  
+  <!-- Overlay para cerrar sidebar en móvil -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <div id="sidebar-container" class="bg-primary">
+      <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+      <div class="menu">
+        <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
+        {% if es_admin %}
+        <a href="{% url 'usuarios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-contacts mr-2 lead"></i>Usuarios</a>
+        {% endif %}
+        <a href="{% url 'listar_proveedores' %}" class="d-block text-light p-3"><i class="icon ion-md-cube mr-2 lead"></i>Proveedores</a>
+        <a href="{% url 'ventas_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-cart mr-2 lead"></i>Ventas</a>
+        <a href="{% url 'list_categoria' %}" class="d-block text-light p-3"><i class="icon ion-md-copy mr-2 lead"></i>Categoría</a>
+        <a href="{% url 'list_producto' %}" class="d-block text-light p-3"><i class="icon ion-md-folder mr-2 lead"></i>Inventario</a>
+        <a href="{% url 'envios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bicycle mr-2 lead"></i>Envíos</a>
+        {% if es_admin %}
+        <a href="{% url 'mensajeria_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bus mr-2 lead"></i>Mensajería</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="w-100">
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                  <span class="d-none d-md-inline">{{ usuario.p_nombre }} {{ usuario.p_apellido }}</span>
+                  <span class="d-md-none">{{ usuario.p_nombre }}</span>
+                  <span class="role-badge {% if es_admin %}badge-admin{% else %}badge-operario{% endif %}">
+                    {{ usuario.tipo_usu|title }}
+                  </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <a class="dropdown-item" href="{% url 'perfil_usuario' %}"><i class="icon ion-md-person mr-2"></i>Mi perfil</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="{% url 'logout' %}"><i class="icon ion-md-log-out mr-2"></i>Cerrar Sesión</a>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <div id="content">
+        {% if messages %}
+        <div class="container mt-3">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <section class="py-3 py-md-4">
+          <div class="container">
+            <div class="row">
+              <div class="col-12 col-lg-9 mb-2 mb-lg-0">
+                <h1 class="font-weight-bold mb-2">Bienvenido {{ usuario.p_nombre }} <span class="d-none d-md-inline">{{ usuario.p_apellido }}</span></h1>
+                <p class="lead text-muted mb-0">
+                  {% if es_admin %}
+                    <span class="d-none d-md-inline">Panel de Administrador - Vista completa del sistema</span>
+                    <span class="d-md-none">Admin - Vista completa</span>
+                  {% else %}
+                    <span class="d-none d-md-inline">Panel de Operario - Tus estadísticas personales</span>
+                    <span class="d-md-none">Operario - Tus stats</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-12 col-lg-3 text-lg-right text-center">
+                <p class="text-muted mb-0">{{ "now"|date:"d/m/Y" }}</p>
+                <p class="text-muted">{{ "now"|date:"H:i" }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Estadísticas Principales -->
+        <section class="bg-mix">
+          <div class="container">
+            <div class="card rounded-0">
+              <div class="card-body p-2 p-md-3">
+                <div class="row">
+                  <!-- Ingresos del Mes -->
+                  <div class="col-12 col-sm-6 col-lg-3 d-flex stat my-2 my-md-3">
+                    <div class="mx-auto stat-card text-center">
+                      <h6 class="text-muted mb-1">Ingresos del Mes</h6>
+                      <h3 class="font-weight-bold mb-1">${{ estadisticas_dashboard.ingresos_mes|floatformat:0 }}</h3>
+                      <h6 class="mb-0 {% if estadisticas_dashboard.ingresos_crecimiento %}text-success{% else %}text-danger{% endif %}">
+                        <i class="icon ion-md-arrow-{% if estadisticas_dashboard.ingresos_crecimiento %}dropup{% else %}dropdown{% endif %}-circle"></i>
+                        {{ estadisticas_dashboard.ingresos_porcentaje }}%
+                      </h6>
+                    </div>
+                  </div>
+
+                  <!-- Ventas Totales -->
+                  <div class="col-12 col-sm-6 col-lg-3 d-flex stat my-2 my-md-3">
+                    <div class="mx-auto stat-card text-center">
+                      <h6 class="text-muted mb-1">Ventas Totales</h6>
+                      <h3 class="font-weight-bold mb-1">${{ estadisticas_dashboard.ventas_totales|floatformat:0 }}</h3>
+                      <h6 class="text-info mb-0"><i class="icon ion-md-cash"></i> Histórico</h6>
+                    </div>
+                  </div>
+
+                  <!-- Productos Vendidos -->
+                  <div class="col-12 col-sm-6 col-lg-3 d-flex stat my-2 my-md-3">
+                    <div class="mx-auto stat-card text-center">
+                      <h6 class="text-muted mb-1">Productos Vendidos</h6>
+                      <h3 class="font-weight-bold mb-1">{{ estadisticas_dashboard.productos_vendidos }}</h3>
+                      <h6 class="text-success mb-0"><i class="icon ion-md-cube"></i> Este mes</h6>
+                    </div>
+                  </div>
+                  
+                  <!-- Estado de Envíos -->
+                  <div class="col-12 col-sm-6 col-lg-3 d-flex my-2 my-md-3">
+                    <div class="mx-auto stat-card text-center w-100">
+                      <h6 class="text-muted mb-2">Estado de Envíos</h6>
+                      <div class="row envios-stats">
+                        <div class="col-6 border-right">
+                          <h4 class="font-weight-bold text-warning mb-0">{{ estadisticas_dashboard.envios_pendientes }}</h4>
+                          <small class="text-muted d-none d-md-inline">Pendientes</small>
+                          <small class="text-muted d-md-none">Pend.</small>
+                        </div>
+                        <div class="col-6">
+                          <h4 class="font-weight-bold text-info mb-0">{{ estadisticas_dashboard.envios_transito }}</h4>
+                          <small class="text-muted d-none d-md-inline">En Tránsito</small>
+                          <small class="text-muted d-md-none">Trán.</small>
+                        </div>
+                      </div>
+                      <hr class="my-2">
+                      <div class="row envios-stats">
+                        <div class="col-6 border-right">
+                          <h4 class="font-weight-bold text-success mb-0">{{ estadisticas_dashboard.envios_entregados }}</h4>
+                          <small class="text-muted d-none d-md-inline">Entregados</small>
+                          <small class="text-muted d-md-none">Entr.</small>
+                        </div>
+                        <div class="col-6">
+                          <h4 class="font-weight-bold text-danger mb-0">{{ estadisticas_dashboard.envios_devueltos }}</h4>
+                          <small class="text-muted d-none d-md-inline">Devueltos</small>
+                          <small class="text-muted d-md-none">Dev.</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contenido Principal -->
+        <section class="bg-grey py-3">
+          <div class="container">
+            <div class="row">
+              <!-- Columna Izquierda -->
+              <div class="col-12 col-lg-8 my-2 my-md-3">
+                <!-- Alertas (Solo Admin) -->
+                {% if es_admin and tiene_alertas %}
+                <div class="card rounded-0 mb-3">
+                  <div class="card-header bg-warning text-white">
+                    <h6 class="font-weight-bold mb-0"><i class="icon ion-md-warning"></i> Alertas del Sistema</h6>
+                  </div>
+                  <div class="card-body p-2 p-md-3">
+                    <!-- Productos con stock bajo -->
+                    {% if productos_stock_bajo %}
+                    <h6 class="font-weight-bold mb-2"><i class="icon ion-md-alert"></i> Productos con Stock Bajo</h6>
+                    {% for producto in productos_stock_bajo %}
+                    <div class="alerta-stock">
+                      <strong>{{ producto.nombre }}</strong>
+                      {% if producto.descripcion %}
+                        <span class="d-none d-md-inline">- {{ producto.descripcion }}</span>
+                      {% endif %}
+                      <br>
+                      Stock: <span class="text-danger font-weight-bold">{{ producto.stock_total }}</span>
+                      <span class="d-none d-md-inline">(Mínimo: {{ producto.stock_minimo }})</span>
+                    </div>
+                    {% endfor %}
+                    <a href="{% url 'list_producto' %}" class="btn btn-warning btn-sm btn-block btn-md-inline mt-2">
+                      <span class="d-none d-md-inline">Ver Inventario Completo</span>
+                      <span class="d-md-none">Ver Inventario</span>
+                    </a>
+                    <hr>
+                    {% endif %}
+                    
+                    <!-- Envíos pendientes -->
+                    {% if estadisticas_dashboard.envios_pendientes > 0 %}
+                    <h6 class="font-weight-bold mb-2"><i class="icon ion-md-bicycle"></i> Envíos Pendientes</h6>
+                    <div class="alerta-envio">
+                      Tienes <strong>{{ estadisticas_dashboard.envios_pendientes }}</strong> envíos pendientes por procesar
+                    </div>
+                    <a href="{% url 'envios_listar' %}" class="btn btn-info btn-sm btn-block btn-md-inline mt-2">
+                      <span class="d-none d-md-inline">Gestionar Envíos</span>
+                      <span class="d-md-none">Gestionar</span>
+                    </a>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+
+              <!-- Gráfico de Ventas -->
+<div class="card rounded-0 mb-3">
+  <div class="card-header">
+    <h6 class="font-weight-bold mb-0">
+      <span class="d-none d-md-inline">Estadísticas de Ventas (Últimos 6 Meses)</span>
+      <span class="d-md-none">Ventas (6 meses)</span>
+    </h6>
+  </div>
+  <div class="card-body p-2 p-md-3">
+    <canvas id="myChart"></canvas>
+  </div>
+</div>
+
+                <!-- Historial de Ventas -->
+                <div class="card rounded-0 mt-3">
+                  <div class="card-header bg-light">
+                    <h6 class="font-weight-bold mb-0">Últimas Ventas Realizadas</h6>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                          <tr>
+                            <th class="d-none d-md-table-cell">#</th>
+                            <th>Factura</th>
+                            <th class="d-none d-lg-table-cell">Vendedor</th>
+                            <th class="d-none d-md-table-cell">Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for venta in historial_ventas %}
+                          <tr>
+                            <td class="d-none d-md-table-cell">{{ forloop.counter }}</td>
+                            <td>
+                              <a href="{% url 'ventas_detalle' venta.id %}">{{ venta.numero_factura }}</a>
+                              <div class="small text-muted d-md-none">{{ venta.fecha_factura|date:"d/m/y" }}</div>
+                            </td>
+                            <td class="d-none d-lg-table-cell">{{ venta.usuarios_id_usuario.nombre_completo|truncatewords:2 }}</td>
+                            <td class="d-none d-md-table-cell">{{ venta.fecha_factura|date:"d/m/Y H:i" }}</td>
+                            <td><strong>${{ venta.valor_total|floatformat:0 }}</strong></td>
+                            <td>
+                              {% if venta.estado_pago == 'pagado' %}
+                                <span class="badge badge-success">
+                                  <span class="d-none d-md-inline">Pagado</span>
+                                  <span class="d-md-none">✓</span>
+                                </span>
+                              {% elif venta.estado_pago == 'pendiente' %}
+                                <span class="badge badge-danger">
+                                  <span class="d-none d-md-inline">Pendiente</span>
+                                  <span class="d-md-none">!</span>
+                                </span>
+                              {% else %}
+                                <span class="badge badge-warning">
+                                  <span class="d-none d-md-inline">Parcial</span>
+                                  <span class="d-md-none">~</span>
+                                </span>
+                              {% endif %}
+                            </td>
+                          </tr>
+                          {% empty %}
+                          <tr><td colspan="6" class="text-center text-muted py-4">No hay ventas registradas</td></tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna Derecha -->
+              <div class="col-12 col-lg-4 my-2 my-md-3">
+                <!-- Ventas Recientes -->
+                <div class="card rounded-0 mb-3">
+                  <div class="card-header bg-light">
+                    <h6 class="font-weight-bold mb-0">Ventas Recientes</h6>
+                  </div>
+                  <div class="card-body pt-2 p-2 p-md-3">
+                    {% for venta in ventas_recientes %}
+                    <div class="d-flex border-bottom py-2 align-items-center">
+                      <div class="mr-2 mr-md-3"><i class="icon ion-md-pricetag text-success" style="font-size:20px;"></i></div>
+                      <div class="flex-fill">
+                        <strong>${{ venta.valor_total|floatformat:0 }}</strong>
+                        <div class="small text-muted">{{ venta.numero_factura }}</div>
+                        <div class="small">{{ venta.fecha_factura|date:"d M, H:i" }}</div>
+                      </div>
+                    </div>
+                    {% empty %}
+                      <p class="text-muted text-center py-3">No hay ventas recientes</p>
+                    {% endfor %}
+                    {% if ventas_recientes %}
+                      <a href="{% url 'ventas_listar' %}" class="btn btn-success w-100 mt-3">Ver Todas</a>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Envíos Próximos -->
+                {% if envios_proximos %}
+                <div class="card rounded-0 mb-3">
+                  <div class="card-header bg-info text-white">
+                    <h6 class="font-weight-bold mb-0">Envíos Próximos</h6>
+                  </div>
+                  <div class="card-body pt-2 p-2 p-md-3">
+                    {% for envio in envios_proximos %}
+                    <div class="d-flex border-bottom py-2 align-items-center">
+                      <div class="mr-2 mr-md-3"><i class="icon ion-md-bicycle text-info" style="font-size:20px;"></i></div>
+                      <div class="flex-fill">
+                        <strong>{{ envio.venta_idfactura.numero_factura }}</strong>
+                        <div class="small text-muted">{{ envio.direccion_envio|truncatewords:3 }}</div>
+                        <div class="small"><strong>Entrega:</strong> {{ envio.fecha_entrega|date:"d M" }}</div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                    <a href="{% url 'envios_listar' %}" class="btn btn-info w-100 mt-3">Ver Todos</a>
+                  </div>
+                </div>
+                {% endif %}
+
+                <!-- Envíos Entregados -->
+                {% if envios_entregados_recientes %}
+                <div class="card rounded-0">
+                  <div class="card-header bg-success text-white">
+                    <h6 class="font-weight-bold mb-0">Envíos Entregados</h6>
+                  </div>
+                  <div class="card-body pt-2 p-2 p-md-3">
+                    {% for envio in envios_entregados_recientes %}
+                    <div class="d-flex border-bottom py-2 align-items-center">
+                      <div class="mr-2 mr-md-3"><i class="icon ion-md-checkmark-circle text-success" style="font-size:20px;"></i></div>
+                      <div class="flex-fill">
+                        <strong>{{ envio.venta_idfactura.numero_factura }}</strong>
+                        <div class="small text-muted">{{ envio.fk_mensajeria.nombre_mensajeria }}</div>
+                        <div class="small">
+                          <strong>Entregado:</strong> 
+                          <span class="text-success">{{ envio.fecha_entrega|date:"d M Y" }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                    <a href="{% url 'envios_listar' %}?estado=entregado" class="btn btn-success w-100 mt-3">Ver Todos</a>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+
+<script>
+// Toggle Sidebar
+window.toggleSidebar = function() {
+  const sidebar = document.getElementById('sidebar-container');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar) sidebar.classList.toggle('active');
+  if (overlay) overlay.classList.toggle('active');
+};
+
+// Esperar a que cargue completamente
+window.addEventListener('load', function() {
+  
+  // Gráfico de Chart.js
+  const canvas = document.getElementById('myChart');
+  
+  if (!canvas) {
+    console.error('Canvas no encontrado en el DOM');
+    return;
+  }
+
+  const chartLabels = {{ grafico_labels|safe }};
+  const chartData = {{ grafico_valores|safe }};
+
+  if (typeof Chart === 'undefined') {
+    console.error('Chart.js no está cargado');
+    return;
+  }
+
+  if (!chartLabels || !chartData) {
+    console.error('Datos del gráfico no disponibles');
+    return;
+  }
+
+  console.log('Creando gráfico con:', chartLabels, chartData);
+////////////
+  const ctx = canvas.getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: chartLabels,
+    datasets: [{
+      label: 'Ventas ($)',
+      backgroundColor: '#3d862e',
+      borderColor: '#2d6621',
+      borderWidth: 2,
+      data: chartData
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: { 
+      y: { 
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return '$' + value.toLocaleString();
+          }
+        }
+      } 
+    },
+    plugins: {
+      legend: { display: true },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return 'Ventas: $' + context.parsed.y.toLocaleString();
+          }
+        }
+      }
+    }
+  }
+});
+
+  console.log('✅ Gráfico creado exitosamente');
+});
+
+// Cerrar sidebar al hacer clic fuera
+document.addEventListener('click', function(event) {
+  const sidebar = document.getElementById('sidebar-container');
+  const toggleBtn = document.querySelector('.menu-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  if (window.innerWidth <= 768 && sidebar && toggleBtn) {
+    if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+      sidebar.classList.remove('active');
+      if (overlay) overlay.classList.remove('active');
+    }
+  }
+});
+</script>
+</body>
+</html>

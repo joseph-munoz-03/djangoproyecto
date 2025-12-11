@@ -1,0 +1,276 @@
+{% extends 'ventas/base_ventas.html' %}
+
+{% block title %}Lista de Ventas - Romar Natural{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="font-weight-bold">
+                <i class="icon ion-md-cart"></i> Gestión de Ventas
+            </h2>
+            <p class="text-muted">
+                {% if es_admin %}
+                    Historial de todas las ventas del sistema
+                {% else %}
+                    Historial de mis ventas realizadas
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-right">
+            <a href="{% url 'ventas_crear' %}" class="btn btn-primary">
+                <i class="icon ion-md-add-circle"></i> Nueva Venta
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end">
+                <div class="col-md-4 mb-2">
+                    <label>Buscar</label>
+                    <input type="text" name="search" class="form-control" placeholder="Factura o vendedor..." value="{{ search }}">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Estado de Pago</label>
+                    <select name="estado" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="pagado" {% if estado == 'pagado' %}selected{% endif %}>Pagado</option>
+                        <option value="pendiente" {% if estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="parcial" {% if estado == 'parcial' %}selected{% endif %}>Parcial</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Método de Pago</label>
+                    <select name="metodo" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="efectivo" {% if metodo == 'efectivo' %}selected{% endif %}>Efectivo</option>
+                        <option value="tarjeta" {% if metodo == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
+                        <option value="transferencia" {% if metodo == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                        <option value="mixto" {% if metodo == 'mixto' %}selected{% endif %}>Mixto</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="icon ion-md-search"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} ventas
+                </span>
+                {% if page_obj.has_other_pages %}
+                <span class="text-muted">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de ventas -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha</th>
+                            <th>Vendedor</th>
+                            <th>Subtotal</th>
+                            <th>Descuento</th>
+                            <th>IVA</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Método</th>
+                            <th class="text-center">Envío</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in page_obj %}
+                        <tr>
+                            <td><strong>{{ venta.numero_factura }}</strong></td>
+                            <td>{{ venta.fecha_factura|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {{ venta.usuarios_id_usuario.nombre_completo }}
+                                {% if venta.usuarios_id_usuario.id == usuario.id %}
+                                    <span class="badge badge-info badge-sm">Tú</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ venta.subtotal|floatformat:0 }}</td>
+                            <td>${{ venta.descuento|floatformat:0 }}</td>
+                            <td>${{ venta.iva|floatformat:0 }}</td>
+                            <td><strong>${{ venta.valor_total|floatformat:0 }}</strong></td>
+                            <td>
+                                {% if venta.estado_pago == 'pagado' %}
+                                    <span class="badge badge-success">Pagado</span>
+                                {% elif venta.estado_pago == 'pendiente' %}
+                                    <span class="badge badge-danger">Pendiente</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Parcial</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-secondary">{{ venta.metodo_pago|title }}</span>
+                            </td>
+                            
+                            <!-- Columna Estado de Envío -->
+                            <td class="text-center">
+                                {% if venta.envio_asociado %}
+                                    {% if venta.envio_asociado.estado_envio == 'pendiente' %}
+                                        <span class="badge badge-warning">Pendiente</span>
+                                    {% elif venta.envio_asociado.estado_envio == 'en_transito' %}
+                                        <span class="badge badge-info">En Tránsito</span>
+                                    {% elif venta.envio_asociado.estado_envio == 'entregado' %}
+                                        <span class="badge badge-success">Entregado</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Devuelto</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-secondary">Sin Envío</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Columna Acciones -->
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <!-- Ver Detalles -->
+                                    <a href="{% url 'ventas_detalle' venta.id %}" 
+                                       class="btn btn-sm btn-info" 
+                                       title="Ver detalles">
+                                        <i class="icon ion-md-eye"></i>
+                                    </a>
+                                    
+                                    <!-- Botón de Envío Condicional -->
+                                    {% if venta.envio_asociado %}
+                                        <!-- Ya tiene envío: Mostrar ícono de bus -->
+                                        <a href="{% url 'envios_detalle' venta.envio_asociado.id %}" 
+                                           class="btn btn-sm btn-success" 
+                                           title="Ver envío - Estado: {{ venta.envio_asociado.estado_envio }}">
+                                            <i class="icon ion-md-bus"></i>
+                                        </a>
+                                    {% else %}
+                                        <!-- NO tiene envío: Mostrar alerta -->
+                                        <a href="{% url 'envios_crear' %}?venta_id={{ venta.id }}" 
+                                           class="btn btn-sm btn-warning" 
+                                           title="Crear envío para esta venta">
+                                            <i class="icon ion-md-alert"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- Eliminar (Solo Admin) -->
+                                    {% if es_admin %}
+                                    <a href="{% url 'ventas_eliminar' venta.id %}" 
+                                       class="btn btn-sm btn-danger" 
+                                       title="Eliminar venta"
+                                       onclick="return confirm('⚠️ ¿Está seguro de eliminar esta venta?\n\nFactura: {{ venta.numero_factura }}\nTotal: ${{ venta.valor_total|floatformat:0 }}\n\nEsta acción devolverá el stock al inventario y no se puede deshacer.')">
+                                        <i class="icon ion-md-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-center py-4">
+                                <i class="icon ion-md-alert" style="font-size: 3rem; color: #ccc;"></i>
+                                <p class="text-muted">
+                                    {% if search or estado or metodo %}
+                                        No se encontraron ventas con los filtros aplicados
+                                    {% else %}
+                                        No hay ventas registradas
+                                    {% endif %}
+                                </p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación Mejorada -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination justify-content-center">
+                    <!-- Primera página -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if metodo %}&metodo={{ metodo }}{% endif %}" aria-label="Primera">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if metodo %}&metodo={{ metodo }}{% endif %}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;&laquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Páginas numeradas -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if metodo %}&metodo={{ metodo }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Última página -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if metodo %}&metodo={{ metodo }}{% endif %}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if metodo %}&metodo={{ metodo }}{% endif %}" aria-label="Última">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <!-- Info adicional de paginación -->
+            <p class="text-center text-muted">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} 
+                ({{ page_obj.paginator.count }} ventas en total)
+            </p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

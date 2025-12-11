@@ -1,0 +1,343 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Editar Lote - Romar Natural</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        :root {
+            --primary: #3d862e;
+            --light: #ffffff;
+            --grey: #efefef;
+        }
+        
+        body {
+            font-family: 'Mulish', sans-serif;
+        }
+        
+        .badge-admin {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-operario {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2d6621;
+            border-color: #2d6621;
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar-container {
+                position: fixed;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                height: 100vh;
+            }
+            
+            #sidebar-container.active {
+                left: 0;
+            }
+            
+            .menu-toggle {
+                display: block !important;
+            }
+        }
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 999;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .role-badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="icon ion-md-menu"></i>
+    </button>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div id="sidebar-container" class="bg-primary">
+            <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+            <div class="menu">
+                <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
+                {% if es_admin %}
+                <a href="{% url 'usuarios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-contacts mr-2 lead"></i>Usuarios</a>
+                {% endif %}
+                <a href="{% url 'listar_proveedores' %}" class="d-block text-light p-3"><i class="icon ion-md-cube mr-2 lead"></i>Proveedores</a>
+                <a href="{% url 'ventas_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-cart mr-2 lead"></i>Ventas</a>
+                <a href="{% url 'list_categoria' %}" class="d-block text-light p-3"><i class="icon ion-md-copy mr-2 lead"></i>Categoría</a>
+                <a href="{% url 'list_producto' %}" class="d-block text-light p-3"><i class="icon ion-md-folder mr-2 lead"></i>Inventario</a>
+                <a href="{% url 'envios_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bicycle mr-2 lead"></i>Envíos</a>
+                {% if es_admin %}
+                <a href="{% url 'mensajeria_listar' %}" class="d-block text-light p-3"><i class="icon ion-md-bus mr-2 lead"></i>Mensajería</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="w-100">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                                    {{ usuario.p_nombre }} {{ usuario.p_apellido }}
+                                    <span class="role-badge {% if es_admin %}badge-admin{% else %}badge-operario{% endif %}">
+                                        {{ usuario.tipo_usu|title }}
+                                    </span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="{% url 'perfil_usuario' %}">
+                                        <i class="icon ion-md-person mr-2"></i>Mi perfil
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="icon ion-md-log-out mr-2"></i>Cerrar Sesión
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div id="content" class="p-4">
+                <h2 class="mb-4"><i class="icon ion-md-cube mr-2 text-warning"></i>Editar Lote Individual</h2>
+                
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-info">
+                    <i class="icon ion-md-information-circle mr-2"></i>
+                    <strong>Nota:</strong> Solo puedes editar stock y fecha de vencimiento de este lote específico.
+                    Para cambiar nombre, precio de venta o categoría, edita el producto maestro desde el listado principal.
+                </div>
+
+                <form method="POST" action="{% url 'editar_producto' lote.id %}">
+                    {% csrf_token %}
+                    
+                    <!-- Información No Editable -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="icon ion-md-lock mr-2"></i>Información del Producto (No Editable)</h5>
+                        </div>
+                        <div class="card-body bg-light">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Producto:</strong></p>
+                                    <p class="text-muted">{{ lote.nombre_producto }} {{ lote.descripcion_producto }}</p>
+                                    
+                                    <p class="mb-2 mt-3"><strong>Código de Lote:</strong></p>
+                                    <p class="text-muted"><span class="badge badge-dark badge-lg">{{ lote.codigo_barras }}</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Categoría:</strong></p>
+                                    <p class="text-muted">{{ lote.categoria_idcategoria.nombre_categoria }}</p>
+                                    
+                                    <p class="mb-2 mt-3"><strong>Precio de Venta:</strong></p>
+                                    <p class="text-muted text-success font-weight-bold">$ {{ lote.precio_venta|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <i class="icon ion-md-alert mr-2"></i>
+                                <small>Para modificar estos datos, edita el producto maestro desde el inventario principal.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos Editables del Lote -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="icon ion-md-create mr-2"></i>Datos Editables del Lote</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Stock Actual * <span class="text-danger">⬤</span></label>
+                                        <input type="number" class="form-control form-control-lg" name="stock_actual" 
+                                               value="{{ lote.stock_actual }}" min="0" required>
+                                        <small class="form-text text-muted">Unidades disponibles en este lote</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Stock Mínimo</label>
+                                        <input type="number" class="form-control" name="stock_minimo" 
+                                               value="{{ lote.stock_minimo }}" min="0">
+                                        <small class="form-text text-muted">Alerta de stock bajo</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Stock Máximo</label>
+                                        <input type="number" class="form-control" name="stock_maximo" 
+                                               value="{{ lote.stock_maximo }}" min="0">
+                                        <small class="form-text text-muted">Límite máximo del lote</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Fecha de Vencimiento</label>
+                                        <input type="date" class="form-control" name="fecha_vencimiento" 
+                                               value="{{ lote.fecha_vencimiento|date:'Y-m-d' }}">
+                                        <small class="form-text text-muted">Controla la vida útil del lote</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Registro Sanitario</label>
+                                        <input type="text" class="form-control" name="registrosanitario" 
+                                               value="{{ lote.registrosanitario }}" maxlength="100">
+                                        <small class="form-text text-muted">Código de registro sanitario</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Adicional -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="icon ion-md-information-circle mr-2"></i>Información de Compra (Solo Lectura)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Precio de Compra:</strong></p>
+                                    <p class="text-muted">$ {{ lote.precio_compra|floatformat:2 }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Fecha de Creación:</strong></p>
+                                    <p class="text-muted">{{ lote.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="mt-4 mb-5">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="icon ion-md-checkmark-circle mr-2"></i>Guardar Cambios del Lote
+                        </button>
+                        <a href="{% url 'list_producto' %}" class="btn btn-secondary btn-lg">
+                            <i class="icon ion-md-close-circle mr-2"></i>Cancelar
+                        </a>
+                        <a href="{% url 'list_producto' %}" class="btn btn-outline-primary btn-lg float-right">
+                            <i class="icon ion-md-arrow-back mr-2"></i>Volver al Inventario
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar-container').classList.toggle('active');
+        }
+
+        // Validación de fecha de vencimiento
+        const fechaVencInput = document.querySelector('input[name="fecha_vencimiento"]');
+        if (fechaVencInput) {
+            // Establecer fecha mínima (hoy)
+            const hoy = new Date().toISOString().split('T')[0];
+            fechaVencInput.min = hoy;
+        }
+
+        // Validación de stock
+        const stockActualInput = document.querySelector('input[name="stock_actual"]');
+        const stockMinimoInput = document.querySelector('input[name="stock_minimo"]');
+        const stockMaximoInput = document.querySelector('input[name="stock_maximo"]');
+
+        function validarStock() {
+            const actual = parseInt(stockActualInput.value) || 0;
+            const minimo = parseInt(stockMinimoInput.value) || 0;
+            const maximo = parseInt(stockMaximoInput.value) || 0;
+
+            // Advertir si stock actual está bajo
+            if (actual < minimo && actual > 0) {
+                stockActualInput.classList.add('border-warning');
+            } else if (actual === 0) {
+                stockActualInput.classList.add('border-danger');
+            } else {
+                stockActualInput.classList.remove('border-warning', 'border-danger');
+                stockActualInput.classList.add('border-success');
+            }
+
+            // Validar que máximo sea mayor que mínimo
+            if (maximo > 0 && minimo > 0 && maximo < minimo) {
+                stockMaximoInput.classList.add('border-danger');
+            } else {
+                stockMaximoInput.classList.remove('border-danger');
+            }
+        }
+
+        if (stockActualInput) {
+            stockActualInput.addEventListener('input', validarStock);
+            stockMinimoInput.addEventListener('input', validarStock);
+            stockMaximoInput.addEventListener('input', validarStock);
+            validarStock(); // Validar al cargar
+        }
+
+        // Cerrar sidebar al hacer click fuera (móvil)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar-container');
+            const toggleBtn = document.querySelector('.menu-toggle');
+            if (window.innerWidth <= 768 && sidebar && toggleBtn) {
+                if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

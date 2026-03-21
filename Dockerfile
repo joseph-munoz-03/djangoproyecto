@@ -27,4 +27,7 @@ COPY . .
 # Crear directorio para archivos estáticos
 RUN mkdir -p staticfiles
 
+# Comando de inicio
+CMD bash -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python crear_usuarios.py && gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --worker-class sync SGIEVpy.wsgi:application"
+
 # No ejecutar collectstatic en build time (requiere BD)

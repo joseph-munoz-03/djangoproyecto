@@ -22,4 +22,3 @@ services:
         value: "dpg-d6v8e41r0fns73c4l24g-a"
       - key: DB_PORT
         value: "5432"
-    startCommand: bash start.sh

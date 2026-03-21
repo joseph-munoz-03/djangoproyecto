@@ -8,9 +8,10 @@ ENV PYTHONUNBUFFERED=1 \
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema para MariaDB
 RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
+    mariadb-client \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 

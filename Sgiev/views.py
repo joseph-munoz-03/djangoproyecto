@@ -3,10 +3,33 @@ from django.contrib.auth import authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db import models, transaction
-from django.http import JsonResponse
+from django.core.mail import EmailMessage, send_mail
+from django.conf import settings
+from django.db import models, transaction, IntegrityError
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.safestring import mark_safe
+from django.views.decorators.cache import never_cache
+from django.template.loader import render_to_string, get_template
+from django.db.models import Q, F, Sum, Count, Min, Avg
+from django.db.models.functions import Coalesce
 from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
+from io import BytesIO
+import logging
+import json
+import uuid
+from uuid import uuid4
+import openpyxl
+from openpyxl.utils import get_column_letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
 from .models import (
     Categoria, 
     Proveedor,
@@ -22,34 +45,6 @@ from .models import (
 )
 from .forms import LoginForm, UsuarioForm, VentaForm, AgregarProductoForm,EditarEstadoVentaForm,EnvioForm, MensajeriaForm,EnvioEditarOperarioForm
 from .decorators import admin_required
-import json
-from django.utils.safestring import mark_safe
-from django.template.loader import render_to_string
-import openpyxl
-from openpyxl.utils import get_column_letter
-from django.http import HttpResponse
-from django.db.models import Q
-from django.db.models import F 
-from django.template.loader import get_template
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib import colors
-from django.views.decorators.cache import never_cache
-from django.http import HttpResponseRedirect 
-from django.urls import reverse
-from django.utils import timezone
-from django.db.models import Sum, Count, Q, F,Min
-from django.utils import timezone
-from datetime import datetime, date, timedelta
-from decimal import Decimal
-import json
-from django.db import IntegrityError, transaction
-import uuid
-from uuid import uuid4
-from django.db.models import Sum, F, Q, Count, Avg
-from django.db.models.functions import Coalesce
 
 
 
@@ -1816,15 +1811,7 @@ def proveedores_generar_pdf(request):
     """
     Genera un PDF con el listado completo de proveedores.
     """
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER
     from django.http import HttpResponse
-    from io import BytesIO
-    from datetime import datetime
 
     # Obtener proveedores
     proveedores = Proveedor.objects.all().order_by('nombre_proveedor')
@@ -2028,24 +2015,38 @@ def usuarios_crear(request):
 
             usuario = form.save()  # guardar usuario
 
-            # Enviar correo simple al usuario
+            # Enviar correo HTML con estilo al usuario (optimizado)
             if usuario.correo:
                 try:
-                    from django.core.mail import send_mail
-                    send_mail(
+                    html_content = f"""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
+                        <div style="max-width: 500px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="background-color: #d32f2f; color: white; padding: 20px; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; text-align: center;">
+                                <h1 style="margin: 0; font-size: 24px;">¡Bienvenido a EZ!</h1>
+                            </div>
+                            <h2 style="color: #d32f2f;">Hola {usuario.nombre_completo},</h2>
+                            <p>Tu usuario ha sido creado exitosamente en el sistema EZ.</p>
+                            <div style="background-color: #fafafa; border-left: 4px solid #d32f2f; padding: 15px; margin: 20px 0;">
+                                <p><strong>Correo:</strong> {usuario.correo}</p>
+                                <p><strong>Tipo:</strong> {usuario.tipo_usu}</p>
+                            </div>
+                            <p>Ya puedes <a href="https://ez-s171.onrender.com/login/" style="color: #d32f2f; text-decoration: none;"><strong>acceder al sistema</strong></a> con tus credenciales.</p>
+                            <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                                Este es un correo automático. © 2026 EZ System.
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    email = EmailMessage(
                         subject='Tu usuario ha sido creado - EZ System',
-                        message=(
-                            f'Hola {usuario.nombre_completo},\n\n'
-                            f'Tu usuario ha sido creado en EZ System.\n\n'
-                            f'Correo: {usuario.correo}\n'
-                            f'Tipo: {usuario.tipo_usu}\n\n'
-                            f'Accede a: https://ez-s171.onrender.com/login/\n\n'
-                            f'EZ System'
-                        ),
+                        body=html_content,
                         from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[usuario.correo],
-                        fail_silently=False,
+                        to=[usuario.correo],
                     )
+                    email.content_subtype = 'html'
+                    email.send(fail_silently=False)
                 except Exception as e:
                     messages.warning(request, f'Usuario creado, correo no enviado: {str(e)}')
 
@@ -2327,15 +2328,7 @@ def procesar_venta(request):
     descontando stock por lotes (FIFO) a partir del producto maestro.
     Incluye datos de cliente y envío de correos con PDF adjunto.
     """
-    from django.core.mail import EmailMessage
-    from django.conf import settings
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER
-    from io import BytesIO
+    logger = logging.getLogger('Sgiev.views')
     
     venta_form = VentaForm(request.POST)
     carrito = request.session.get('carrito_venta', [])
@@ -2454,7 +2447,7 @@ def procesar_venta(request):
             request.session.modified = True
 
             # ===== GENERAR PDF EN MEMORIA =====
-            productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta)
+            productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta).select_related('producto_idproducto')
             
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -2556,8 +2549,6 @@ def procesar_venta(request):
             # ===== ENVIAR CORREO AL CLIENTE =====
             if venta.correo_cliente:
                 try:
-                    import logging
-                    logger = logging.getLogger('Sgiev.views')
                     email_cliente = EmailMessage(
                         subject=f'Venta registrada - {venta.numero_factura}',
                         body=(
@@ -2574,19 +2565,15 @@ def procesar_venta(request):
                         to=[venta.correo_cliente],
                     )
                     email_cliente.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_cliente.send(fail_silently=False)  # ✅ MOSTRAR ERRORES REALES
+                    email_cliente.send(fail_silently=False)
                     logger.info(f'✓ Correo enviado al cliente: {venta.correo_cliente}')
                 except Exception as e:
-                    import logging
-                    logger = logging.getLogger('Sgiev.views')
                     logger.error(f'❌ Error al enviar correo al cliente: {str(e)}')
                     messages.warning(request, f'Venta guardada pero no se pudo enviar correo al cliente: {str(e)}')
 
             # ===== ENVIAR CORREO AL VENDEDOR =====
             if venta.usuarios_id_usuario.correo:
                 try:
-                    import logging
-                    logger = logging.getLogger('Sgiev.views')
                     email_vendedor = EmailMessage(
                         subject=f'Venta registrada exitosamente - {venta.numero_factura}',
                         body=(
@@ -2602,11 +2589,9 @@ def procesar_venta(request):
                         to=[venta.usuarios_id_usuario.correo],
                     )
                     email_vendedor.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_vendedor.send(fail_silently=False)  # ✅ MOSTRAR ERRORES REALES
+                    email_vendedor.send(fail_silently=False)
                     logger.info(f'✓ Correo enviado al vendedor: {venta.usuarios_id_usuario.correo}')
                 except Exception as e:
-                    import logging
-                    logger = logging.getLogger('Sgiev.views')
                     logger.error(f'❌ Error al enviar correo al vendedor: {str(e)}')
                     messages.warning(request, f'Venta guardada pero no se pudo enviar correo al vendedor: {str(e)}')
 
@@ -3082,15 +3067,7 @@ def envios_crear(request):
     """
     Crear nuevo envío y notificar por correo
     """
-    from django.core.mail import EmailMessage
-    from django.conf import settings
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER
-    from io import BytesIO
+    logger = logging.getLogger('Sgiev.views')
     
     venta_id = request.GET.get('venta_id', None)
 
@@ -3103,7 +3080,7 @@ def envios_crear(request):
             
             # ===== GENERAR PDF DE LA FACTURA =====
             venta = envio.venta_idfactura
-            productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta)
+            productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta).select_related('producto_idproducto')
             
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -3308,15 +3285,7 @@ def envios_editar(request, id):
     Admin: puede editar todo
     Operario: solo puede editar estado y novedades
     """
-    from django.core.mail import EmailMessage
-    from django.conf import settings
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER
-    from io import BytesIO
+    logger = logging.getLogger('Sgiev.views')
     
     envio = get_object_or_404(Envio, pk=id)
     es_admin = request.user.tipo_usu == 'administrador'

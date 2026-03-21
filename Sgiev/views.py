@@ -2554,6 +2554,8 @@ def procesar_venta(request):
             # ===== ENVIAR CORREO AL CLIENTE =====
             if venta.correo_cliente:
                 try:
+                    import logging
+                    logger = logging.getLogger('Sgiev.views')
                     email_cliente = EmailMessage(
                         subject=f'Venta registrada - {venta.numero_factura}',
                         body=(
@@ -2570,13 +2572,19 @@ def procesar_venta(request):
                         to=[venta.correo_cliente],
                     )
                     email_cliente.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_cliente.send(fail_silently=True)
-                except Exception:
-                    pass
+                    email_cliente.send(fail_silently=False)  # ✅ MOSTRAR ERRORES REALES
+                    logger.info(f'✓ Correo enviado al cliente: {venta.correo_cliente}')
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger('Sgiev.views')
+                    logger.error(f'❌ Error al enviar correo al cliente: {str(e)}')
+                    messages.warning(request, f'Venta guardada pero no se pudo enviar correo al cliente: {str(e)}')
 
             # ===== ENVIAR CORREO AL VENDEDOR =====
             if venta.usuarios_id_usuario.correo:
                 try:
+                    import logging
+                    logger = logging.getLogger('Sgiev.views')
                     email_vendedor = EmailMessage(
                         subject=f'Venta registrada exitosamente - {venta.numero_factura}',
                         body=(
@@ -2592,9 +2600,13 @@ def procesar_venta(request):
                         to=[venta.usuarios_id_usuario.correo],
                     )
                     email_vendedor.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_vendedor.send(fail_silently=True)
-                except Exception:
-                    pass
+                    email_vendedor.send(fail_silently=False)  # ✅ MOSTRAR ERRORES REALES
+                    logger.info(f'✓ Correo enviado al vendedor: {venta.usuarios_id_usuario.correo}')
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger('Sgiev.views')
+                    logger.error(f'❌ Error al enviar correo al vendedor: {str(e)}')
+                    messages.warning(request, f'Venta guardada pero no se pudo enviar correo al vendedor: {str(e)}')
 
             # ===== MENSAJES DE ÉXITO =====
             estado_texto = {

@@ -192,12 +192,42 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = False
 
 
+# Email Configuration - Credenciales desde variables de entorno
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 
-EMAIL_HOST_USER = "romarnatural.not.reply@gmail.com"
-EMAIL_HOST_PASSWORD = "bhws mhli xzsu vlzi"
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'ez.application.mail@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # DEBE ESTAR EN RENDER ENV VARS
 
-DEFAULT_FROM_EMAIL = "Romar Natural <romarnatural.not.reply@gmail.com>"
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'EZ Application <ez.application.mail@gmail.com>')
+
+# Logging para debugging de emails
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'Sgiev.views': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

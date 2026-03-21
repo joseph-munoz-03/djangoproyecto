@@ -808,7 +808,7 @@ def generar_reporte_productos(request):
 
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
-        worksheet.title = "Inventario Romar Natural"
+        worksheet.title = "Inventario EZ System"
 
         
         columns = [
@@ -854,7 +854,7 @@ def generar_reporte_productos(request):
         doc = SimpleDocTemplate(response, pagesize=letter)
         styles = getSampleStyleSheet()
         story = [] 
-        story.append(Paragraph("<b>REPORTE DE INVENTARIO - ROMAR NATURAL</b>", styles['h1']))
+        story.append(Paragraph("<b>REPORTE DE INVENTARIO - EZ SYSTEM</b>", styles['h1']))
         story.append(Paragraph(f"Fecha del Reporte: {date.today().strftime('%Y-%m-%d')}", styles['Normal']))
         
         filtro_desc = "Todos los productos"
@@ -1850,7 +1850,7 @@ def proveedores_generar_pdf(request):
     )
 
     # TÍTULO
-    elements.append(Paragraph("ROMAR NATURAL", title_style))
+    elements.append(Paragraph("EZ SYSTEM", title_style))
 
     elements.append(Spacer(1, 0.3 * inch))
 
@@ -2031,21 +2031,146 @@ def usuarios_crear(request):
             # Enviar correo al nuevo usuario (si tiene correo)
             if usuario.correo:
                 try:
-                    send_mail(
-                        subject='Tu usuario ha sido creado - Romar Natural',
-                        message=(
-                            f'Hola {usuario.nombre_completo},\n\n'
-                            f'Tu usuario ha sido creado en el sistema Romar Natural.\n'
-                            f'Correo registrado: {usuario.correo}\n\n'
-                            f'Si no esperabas este mensaje, contacta con el administrador.'
-                        ),
+                    from django.core.mail import EmailMessage
+                    import logging
+                    logger = logging.getLogger('Sgiev.views')
+                    
+                    # Construir el HTML del correo
+                    html_content = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {{
+                                font-family: Arial, sans-serif;
+                                background-color: #f5f5f5;
+                                margin: 0;
+                                padding: 20px;
+                            }}
+                            .container {{
+                                max-width: 600px;
+                                margin: 0 auto;
+                                background-color: #ffffff;
+                                padding: 30px;
+                                border-radius: 8px;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            }}
+                            .header {{
+                                background-color: #1976d2;
+                                color: white;
+                                padding: 20px;
+                                border-radius: 8px 8px 0 0;
+                                text-align: center;
+                                margin: -30px -30px 30px -30px;
+                            }}
+                            .header h1 {{
+                                margin: 0;
+                                font-size: 28px;
+                                font-weight: 600;
+                            }}
+                            .content {{
+                                line-height: 1.6;
+                                color: #333;
+                            }}
+                            .content h2 {{
+                                color: #1976d2;
+                                font-size: 22px;
+                                margin-bottom: 15px;
+                            }}
+                            .info-box {{
+                                background-color: #f9f9f9;
+                                border-left: 4px solid #1976d2;
+                                padding: 15px;
+                                margin: 20px 0;
+                                border-radius: 4px;
+                            }}
+                            .info-box label {{
+                                color: #666;
+                                font-weight: bold;
+                                display: block;
+                                margin-bottom: 5px;
+                            }}
+                            .info-box span {{
+                                color: #333;
+                                font-size: 16px;
+                            }}
+                            .footer {{
+                                margin-top: 30px;
+                                padding-top: 20px;
+                                border-top: 1px solid #eee;
+                                text-align: center;
+                                color: #999;
+                                font-size: 12px;
+                            }}
+                            .cta-button {{
+                                display: inline-block;
+                                background-color: #1976d2;
+                                color: white;
+                                padding: 12px 30px;
+                                text-decoration: none;
+                                border-radius: 4px;
+                                margin-top: 20px;
+                                font-weight: bold;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>¡Bienvenido a EZ!</h1>
+                            </div>
+                            
+                            <div class="content">
+                                <h2>Hola {usuario.nombre_completo},</h2>
+                                
+                                <p>Tu cuenta de usuario ha sido creada exitosamente en el sistema EZ.</p>
+                                
+                                <div class="info-box">
+                                    <label> Correo Registrado:</label>
+                                    <span>{usuario.correo}</span>
+                                </div>
+                                
+                                <div class="info-box">
+                                    <label> Tipo de Usuario:</label>
+                                    <span>{usuario.get_tipo_usu_display() if hasattr(usuario, 'get_tipo_usu_display') else usuario.tipo_usu}</span>
+                                </div>
+                                
+                                <p>Ya puedes acceder al sistema con tus credenciales. Si tienes problemas para iniciar sesión o no recuerdas tu contraseña, contacta con el administrador.</p>
+                                
+                                <p><strong>Datos de Seguridad:</strong></p>
+                                <ul>
+                                    <li>Nunca compartas tu contraseña con terceros</li>
+                                    <li>Asegúrate de cerrar sesión en equipos compartidos</li>
+                                    <li>Cambia tu contraseña regularmente por seguridad</li>
+                                </ul>
+                                
+                                <p style="text-align: center;">
+                                    <a href="https://ez-s171.onrender.com/login/" class="cta-button">Acceder al Sistema</a>
+                                </p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p>Este es un correo automático. Por favor, no respondas a este mensaje.</p>
+                                <p>&copy; 2026 EZ System. Todos los derechos reservados.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    email = EmailMessage(
+                        subject='Tu usuario ha sido creado - EZ System',
+                        body=html_content,
                         from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[usuario.correo],
-                        fail_silently=False,
+                        to=[usuario.correo],
                     )
+                    email.content_subtype = 'html'  # Enviar como HTML
+                    email.send(fail_silently=False)
+                    logger.info(f'✓ Correo de registro enviado a: {usuario.correo}')
                 except Exception as e:
-                    print("ERROR EMAIL USUARIO:", e)
-                    messages.error(request, f'No se pudo enviar el correo: {e}')
+                    logger.error(f'✗ Error al enviar correo de registro: {str(e)}')
+                    messages.error(request, f'Usuario creado pero no se pudo enviar correo: {str(e)}')
 
             messages.success(request, 'Usuario creado exitosamente')
             return redirect('usuarios_listar')
@@ -2467,9 +2592,9 @@ def procesar_venta(request):
                 alignment=TA_CENTER
             )
 
-            elements.append(Paragraph("ROMAR NATURAL", title_style))
-            elements.append(Paragraph("NIT: 52101085", styles['Normal']))
-            elements.append(Paragraph("Teléfono: 3053615676", styles['Normal']))
+            elements.append(Paragraph("EZ SYSTEM", title_style))
+            elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
+            elements.append(Paragraph("Contacto: ez.application.mail@gmail.com", styles['Normal']))
             elements.append(Spacer(1, 0.3 * inch))
 
             elements.append(Paragraph(f"<b>FACTURA: {venta.numero_factura}</b>", styles['Heading2']))
@@ -2566,7 +2691,7 @@ def procesar_venta(request):
                             f'Pronto tu pedido entrará en proceso de envío.\n'
                             f'Adjuntamos tu factura en formato PDF.\n\n'
                             f'Gracias por tu compra.\n\n'
-                            f'Romar Natural'
+                            f'EZ System'
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[venta.correo_cliente],
@@ -2594,7 +2719,7 @@ def procesar_venta(request):
                             f'Total: ${venta.valor_total:,.0f}\n\n'
                             f'Por favor, realiza la asignación del envío lo más pronto posible.\n'
                             f'Adjuntamos la factura en formato PDF.\n\n'
-                            f'Romar Natural'
+                            f'EZ System'
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[venta.usuarios_id_usuario.correo],
@@ -2770,9 +2895,8 @@ def ventas_generar_pdf(request, id):
     )
 
     # Título
-    elements.append(Paragraph("ROMAR NATURAL", title_style))
-    elements.append(Paragraph("NIT: 52101085", styles['Normal']))
-    elements.append(Paragraph("Teléfono: 3053615676", styles['Normal']))
+    elements.append(Paragraph("EZ SYSTEM", title_style))
+    elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
     elements.append(Spacer(1, 0.3 * inch))
 
     # Información de la factura
@@ -3117,9 +3241,9 @@ def envios_crear(request):
                 alignment=TA_CENTER
             )
 
-            elements.append(Paragraph("ROMAR NATURAL", title_style))
-            elements.append(Paragraph("NIT: 52101085", styles['Normal']))
-            elements.append(Paragraph("Teléfono: 3053615676", styles['Normal']))
+            elements.append(Paragraph("EZ SYSTEM", title_style))
+            elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
+            elements.append(Paragraph("Contacto: ez.application.mail@gmail.com", styles['Normal']))
             elements.append(Spacer(1, 0.3 * inch))
 
             elements.append(Paragraph(f"<b>FACTURA: {venta.numero_factura}</b>", styles['Heading2']))
@@ -3226,7 +3350,7 @@ def envios_crear(request):
                             f'Empresa de mensajería: {envio.fk_mensajeria.nombre_mensajeria}\n\n'
                             f'Adjuntamos tu factura en formato PDF.\n\n'
                             f'Gracias por tu preferencia.\n\n'
-                            f'Romar Natural'
+                            f'EZ System'
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[venta.correo_cliente],
@@ -3353,9 +3477,9 @@ def envios_editar(request, id):
                     alignment=TA_CENTER
                 )
 
-                elements.append(Paragraph("ROMAR NATURAL", title_style))
-                elements.append(Paragraph("NIT: 52101085", styles['Normal']))
-                elements.append(Paragraph("Teléfono: 3053615676", styles['Normal']))
+                elements.append(Paragraph("EZ SYSTEM", title_style))
+                elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
+                elements.append(Paragraph("Contacto: ez.application.mail@gmail.com", styles['Normal']))
                 elements.append(Spacer(1, 0.3 * inch))
 
                 elements.append(Paragraph(f"<b>FACTURA: {venta.numero_factura}</b>", styles['Heading2']))
@@ -3485,7 +3609,7 @@ def envios_editar(request, id):
                                 f'Fecha estimada de entrega: {envio.fecha_entrega.strftime("%d/%m/%Y")}\n\n'
                                 f'RECORDATORIO: Mantén actualizado el estado y registra cualquier novedad.\n\n'
                                 f'Adjuntamos la factura en formato PDF.\n\n'
-                                f'Romar Natural'
+                                f'EZ System'
                             ),
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             to=[envio.usuarios_id_usuario.correo],

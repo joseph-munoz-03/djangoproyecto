@@ -9,9 +9,9 @@ ENV PYTHONUNBUFFERED=1 \
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema para MySQL
+# Instalar dependencias del sistema para PostgreSQL
 RUN apt-get update && apt-get install -y \
-    default-libmysqlclient-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements.txt

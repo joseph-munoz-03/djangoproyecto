@@ -29,5 +29,4 @@ COPY . .
 # Crear directorio para archivos estáticos
 RUN mkdir -p staticfiles
 
-# Ejecutar migraciones y recopilar archivos estáticos
-RUN python manage.py collectstatic --noinput || true
+# No ejecutar collectstatic en build time (requiere BD)

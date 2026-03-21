@@ -2028,149 +2028,26 @@ def usuarios_crear(request):
 
             usuario = form.save()  # guardar usuario
 
-            # Enviar correo al nuevo usuario (si tiene correo)
+            # Enviar correo simple al usuario
             if usuario.correo:
                 try:
-                    from django.core.mail import EmailMessage
-                    import logging
-                    logger = logging.getLogger('Sgiev.views')
-                    
-                    # Construir el HTML del correo
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <style>
-                            body {{
-                                font-family: Arial, sans-serif;
-                                background-color: #f5f5f5;
-                                margin: 0;
-                                padding: 20px;
-                            }}
-                            .container {{
-                                max-width: 600px;
-                                margin: 0 auto;
-                                background-color: #ffffff;
-                                padding: 30px;
-                                border-radius: 8px;
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                            }}
-                            .header {{
-                                background-color: #1976d2;
-                                color: white;
-                                padding: 20px;
-                                border-radius: 8px 8px 0 0;
-                                text-align: center;
-                                margin: -30px -30px 30px -30px;
-                            }}
-                            .header h1 {{
-                                margin: 0;
-                                font-size: 28px;
-                                font-weight: 600;
-                            }}
-                            .content {{
-                                line-height: 1.6;
-                                color: #333;
-                            }}
-                            .content h2 {{
-                                color: #1976d2;
-                                font-size: 22px;
-                                margin-bottom: 15px;
-                            }}
-                            .info-box {{
-                                background-color: #f9f9f9;
-                                border-left: 4px solid #1976d2;
-                                padding: 15px;
-                                margin: 20px 0;
-                                border-radius: 4px;
-                            }}
-                            .info-box label {{
-                                color: #666;
-                                font-weight: bold;
-                                display: block;
-                                margin-bottom: 5px;
-                            }}
-                            .info-box span {{
-                                color: #333;
-                                font-size: 16px;
-                            }}
-                            .footer {{
-                                margin-top: 30px;
-                                padding-top: 20px;
-                                border-top: 1px solid #eee;
-                                text-align: center;
-                                color: #999;
-                                font-size: 12px;
-                            }}
-                            .cta-button {{
-                                display: inline-block;
-                                background-color: #1976d2;
-                                color: white;
-                                padding: 12px 30px;
-                                text-decoration: none;
-                                border-radius: 4px;
-                                margin-top: 20px;
-                                font-weight: bold;
-                            }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">
-                                <h1>¡Bienvenido a EZ!</h1>
-                            </div>
-                            
-                            <div class="content">
-                                <h2>Hola {usuario.nombre_completo},</h2>
-                                
-                                <p>Tu cuenta de usuario ha sido creada exitosamente en el sistema EZ.</p>
-                                
-                                <div class="info-box">
-                                    <label> Correo Registrado:</label>
-                                    <span>{usuario.correo}</span>
-                                </div>
-                                
-                                <div class="info-box">
-                                    <label> Tipo de Usuario:</label>
-                                    <span>{usuario.get_tipo_usu_display() if hasattr(usuario, 'get_tipo_usu_display') else usuario.tipo_usu}</span>
-                                </div>
-                                
-                                <p>Ya puedes acceder al sistema con tus credenciales. Si tienes problemas para iniciar sesión o no recuerdas tu contraseña, contacta con el administrador.</p>
-                                
-                                <p><strong>Datos de Seguridad:</strong></p>
-                                <ul>
-                                    <li>Nunca compartas tu contraseña con terceros</li>
-                                    <li>Asegúrate de cerrar sesión en equipos compartidos</li>
-                                    <li>Cambia tu contraseña regularmente por seguridad</li>
-                                </ul>
-                                
-                                <p style="text-align: center;">
-                                    <a href="https://ez-s171.onrender.com/login/" class="cta-button">Acceder al Sistema</a>
-                                </p>
-                            </div>
-                            
-                            <div class="footer">
-                                <p>Este es un correo automático. Por favor, no respondas a este mensaje.</p>
-                                <p>&copy; 2026 EZ System. Todos los derechos reservados.</p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                    """
-                    
-                    email = EmailMessage(
+                    from django.core.mail import send_mail
+                    send_mail(
                         subject='Tu usuario ha sido creado - EZ System',
-                        body=html_content,
+                        message=(
+                            f'Hola {usuario.nombre_completo},\n\n'
+                            f'Tu usuario ha sido creado en EZ System.\n\n'
+                            f'Correo: {usuario.correo}\n'
+                            f'Tipo: {usuario.tipo_usu}\n\n'
+                            f'Accede a: https://ez-s171.onrender.com/login/\n\n'
+                            f'EZ System'
+                        ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[usuario.correo],
+                        recipient_list=[usuario.correo],
+                        fail_silently=False,
                     )
-                    email.content_subtype = 'html'  # Enviar como HTML
-                    email.send(fail_silently=False)
-                    logger.info(f'✓ Correo de registro enviado a: {usuario.correo}')
                 except Exception as e:
-                    logger.error(f'✗ Error al enviar correo de registro: {str(e)}')
-                    messages.error(request, f'Usuario creado pero no se pudo enviar correo: {str(e)}')
+                    messages.warning(request, f'Usuario creado, correo no enviado: {str(e)}')
 
             messages.success(request, 'Usuario creado exitosamente')
             return redirect('usuarios_listar')
@@ -3377,15 +3254,15 @@ def envios_crear(request):
                             f'RECORDATORIO: Por favor actualiza el estado del envío según avance el proceso.\n'
                             f'Accede al sistema para registrar novedades o cambios de estado.\n\n'
                             f'Adjuntamos la factura en formato PDF.\n\n'
-                            f'Romar Natural'
+                            f'EZ System'
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[envio.usuarios_id_usuario.correo],
                     )
                     email_responsable.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_responsable.send(fail_silently=True)
-                except Exception:
-                    pass
+                    email_responsable.send(fail_silently=False)
+                except Exception as e:
+                    messages.warning(request, f'Envío registrado pero no se pudo notificar al responsable: {str(e)}')
 
             messages.success(
                 request,
@@ -3585,15 +3462,15 @@ def envios_editar(request, id):
                                 f'{f"Novedades: {envio.novedades}" if envio.novedades else ""}\n\n'
                                 f'Adjuntamos tu factura en formato PDF.\n\n'
                                 f'Gracias por tu preferencia.\n\n'
-                                f'Romar Natural'
+                                f'EZ System'
                             ),
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             to=[venta.correo_cliente],
                         )
                         email_cliente.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                        email_cliente.send(fail_silently=True)
-                    except Exception:
-                        pass
+                        email_cliente.send(fail_silently=False)
+                    except Exception as e:
+                        messages.warning(request, f'Envío actualizado pero no se pudo notificar al cliente: {str(e)}')
 
                 # ===== ENVIAR CORREO AL RESPONSABLE DEL ENVÍO =====
                 if envio.usuarios_id_usuario.correo:

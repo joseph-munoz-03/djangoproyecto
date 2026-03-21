@@ -7,8 +7,17 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "*.onrender.com"
+        value: "localhost,127.0.0.1,*.onrender.com"
       - key: SECRET_KEY
         generateValue: true
-    buildCommand: docker build -f Dockerfile -t app .
-    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 --workers 4 SGIEVpy.wsgi:application
+      - key: DB_ENGINE
+        value: "django.db.backends.mysql"
+      - key: DB_NAME
+        value: "proyecto"
+      - key: DB_USER
+        value: "root"
+      - key: DB_HOST
+        value: "localhost"
+      - key: DB_PORT
+        value: "3306"
+    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 4 --worker-class sync SGIEVpy.wsgi:application

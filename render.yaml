@@ -2,7 +2,7 @@ services:
   - type: web
     name: mi-app-django
     runtime: docker
-    dockerfilePath: ./deploy/Dockerfile
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: DEBUG
         value: "False"
@@ -10,5 +10,5 @@ services:
         value: "*.onrender.com"
       - key: SECRET_KEY
         generateValue: true
-    buildCommand: docker build -f deploy/Dockerfile -t app .
+    buildCommand: docker build -f Dockerfile -t app .
     startCommand: gunicorn --bind 0.0.0.0:8000 --workers 4 SGIEVpy.wsgi:application

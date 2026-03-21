@@ -1,0 +1,31 @@
+# Entorno virtual
+ez/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.temp
+*.tmp

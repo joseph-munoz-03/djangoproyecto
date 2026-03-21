@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ldqnxfs*nh0$*6g^%p^)^pg_#t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,ez-s171.onrender.com').split(',')]
+ALLOWED_HOSTS = ['*']  # ✅ TEST TEMPORAL: Si funciona en Render, el problema es ALLOWED_HOSTS config
 
 
 # Application definition

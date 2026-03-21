@@ -1925,6 +1925,7 @@ def proveedores_generar_pdf(request):
 def login_view(request):
     """
     Vista para login de usuarios - SIN usar django.contrib.auth.login()
+    Autentica mediante el backend personalizado UsuariosBackend
     """
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -1949,7 +1950,15 @@ def login_view(request):
                 # ACTIVAMOS EL SWEET ALERT (no redirigimos aquí)
                 login_ok = True
             else:
-                messages.error(request, 'Credenciales inválidas')
+                # Verificar si el usuario existe pero está inactivo
+                try:
+                    usuario_inactivo = Usuarios.objects.get(correo__iexact=correo.strip().lower())
+                    if usuario_inactivo.activo != 1:
+                        messages.error(request, f'Tu cuenta está desactivada. Contacta al administrador.')
+                    else:
+                        messages.error(request, 'Correo o contraseña incorrectos')
+                except Usuarios.DoesNotExist:
+                    messages.error(request, 'Correo o contraseña incorrectos')
     else:
         form = LoginForm()
     

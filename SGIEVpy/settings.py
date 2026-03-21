@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ldqnxfs*nh0$*6g^%p^)^pg_#t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,ez-s171.onrender.com,*.onrender.com').split(',')]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,ez-s171.onrender.com').split(',')]
 
 
 # Application definition
@@ -163,18 +163,22 @@ LOGOUT_REDIRECT_URL = '/login/'
 # CSRF y Seguridad
 CSRF_TRUSTED_ORIGINS = [
     'https://ez-s171.onrender.com',
+    'https://localhost',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
 
-# Configuración para HTTPS en producción
+# CRÍTICO PARA RENDER: Proxy SSL Header
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Configuración para producción (cuando DEBUG=False)
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = False  # Render maneja los redirects
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_PRELOAD = False
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

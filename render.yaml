@@ -22,4 +22,4 @@ services:
         value: "dpg-d6v8e41r0fns73c4l24g-a"
       - key: DB_PORT
         value: "5432"
-    startCommand: python render_start.py
+    startCommand: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python crear_usuarios.py && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 4 --worker-class sync SGIEVpy.wsgi:application"

@@ -20,4 +20,4 @@ services:
         value: "localhost"
       - key: DB_PORT
         value: "3306"
-    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 4 --worker-class sync SGIEVpy.wsgi:application
+    startCommand: python manage.py migrate && python manage.py collectstatic --noinput && python crear_usuarios.py && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 4 --worker-class sync SGIEVpy.wsgi:application

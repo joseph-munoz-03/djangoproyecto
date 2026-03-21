@@ -1,6 +1,6 @@
 {% extends 'usuarios/base_usuarios.html' %}
 
-{% block title %}Lista de Usuarios - Romar Natural{% endblock %}
+{% block title %}Lista de Usuarios - EZ{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -13,7 +13,7 @@
             <p class="text-muted">Administra los usuarios del sistema</p>
         </div>
         <div class="col-md-6 text-right">
-            <a href="{% url 'usuarios_crear' %}" class="btn btn-primary">
+            <a href="{% url 'usuarios_crear' %}" class="btn btn-success">
                 <i class="icon ion-md-add-circle"></i> Nuevo Usuario
             </a>
         </div>
@@ -142,3 +142,6 @@
     {% endif %}
 </div>
 {% endblock %}
+
+
+

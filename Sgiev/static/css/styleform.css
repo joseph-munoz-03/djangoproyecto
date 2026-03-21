@@ -1,5 +1,5 @@
 :root {
-    --primary: #3d862e;
+    --primary: #d32f2f;
     --light: #ffffff;
     --grey: #efefef;
 }
@@ -90,7 +90,7 @@ body {
 }
 
 .btn-submit:hover {
-    background-color: #2d6621;
+    background-color: #b71c1c;
     transform: scale(1.03);
 }
 

@@ -64,7 +64,7 @@
       top: 70px;
       left: 15px; 
       z-index: 900;
-      background: #3d862e; 
+      background: #d32f2f; 
       color: white; 
       border: none; 
       padding: 10px 15px; 
@@ -157,6 +157,19 @@
   background-color: #f8f9fa !important;
 }
 
+/* Colores custom - Asegurar que el sidebar sea rojo */
+#sidebar-container {
+  background-color: #d32f2f !important;
+}
+
+#sidebar-container .text-light {
+  color: #ffffff !important;
+}
+
+#sidebar-container a:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
     /* Mejorar legibilidad en móvil pequeño */
     @media (max-width: 576px) {
       .card-header h6 { 
@@ -193,7 +206,7 @@
   <div class="d-flex">
     <!-- Sidebar -->
     <div id="sidebar-container" class="bg-primary">
-      <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+      <div class="logo"><h4 class="text-light font-weight-bold">EZ</h4></div>
       <div class="menu">
         <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
         {% if es_admin %}
@@ -593,8 +606,8 @@ new Chart(ctx, {
     labels: chartLabels,
     datasets: [{
       label: 'Ventas ($)',
-      backgroundColor: '#3d862e',
-      borderColor: '#2d6621',
+      backgroundColor: '#d32f2f',
+      borderColor: '#b71c1c',
       borderWidth: 2,
       data: chartData
     }]
@@ -644,3 +657,6 @@ document.addEventListener('click', function(event) {
 </script>
 </body>
 </html>
+
+
+

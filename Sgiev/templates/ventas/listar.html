@@ -1,6 +1,6 @@
 {% extends 'ventas/base_ventas.html' %}
 
-{% block title %}Lista de Ventas - Romar Natural{% endblock %}
+{% block title %}Lista de Ventas - EZ{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -19,7 +19,7 @@
             </p>
         </div>
         <div class="col-md-6 text-right">
-            <a href="{% url 'ventas_crear' %}" class="btn btn-primary">
+            <a href="{% url 'ventas_crear' %}" class="btn btn-success">
                 <i class="icon ion-md-add-circle"></i> Nueva Venta
             </a>
         </div>
@@ -274,3 +274,6 @@
     {% endif %}
 </div>
 {% endblock %}
+
+
+

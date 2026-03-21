@@ -1,6 +1,6 @@
 {% extends 'envios/base_envios.html' %}
 
-{% block title %}Lista de Envíos - Romar Natural{% endblock %}
+{% block title %}Lista de Envíos - EZ{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -14,7 +14,7 @@
             </p>
         </div>
         <div class="col-md-6 text-right">
-            <a href="{% url 'envios_crear' %}" class="btn btn-primary">
+            <a href="{% url 'envios_crear' %}" class="btn btn-success">
                 <i class="icon ion-md-add-circle"></i> Nuevo Envío
             </a>
         </div>
@@ -271,3 +271,6 @@
     {% endif %}
 </div>
 {% endblock %}
+
+
+

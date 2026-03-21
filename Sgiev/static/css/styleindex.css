@@ -1,6 +1,6 @@
 :root {
-    --primary: #3d862e;
-    --primary-dark: #2d6621;
+    --primary: #d32f2f;
+    --primary-dark: #b71c1c;
     --light: #e3ebe5;
     --grey: #f5f5f5;
     --dark: #333333;
@@ -156,7 +156,7 @@ body {
 .carousel-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(61, 134, 46, 0.8), rgba(0, 0, 0, 0.6));
+    background: linear-gradient(135deg, rgba(211, 47, 47, 0.8), rgba(0, 0, 0, 0.6));
 }
 
 .carousel-content {

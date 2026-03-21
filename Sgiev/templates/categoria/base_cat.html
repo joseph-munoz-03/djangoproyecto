@@ -11,11 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     
-    <title>{% block title %}Categorias - Romar Natural{% endblock %}</title>
+    <title>{% block title %}Categorias - EZ{% endblock %}</title>
     
     <style>
         :root {
-            --primary: #3d862e;
+            --primary: #d32f2f;
             --light: #ffffff;
             --grey: #efefef;
         }
@@ -40,12 +40,12 @@
         }
         
         .btn-primary:hover {
-            background-color: #2d6621;
-            border-color: #2d6621;
+            background-color: #b71c1c;
+            border-color: #b71c1c;
         }
         
         .table-hover tbody tr:hover {
-            background-color: rgba(61, 134, 46, 0.1);
+            background-color: rgba(211, 47, 47, 0.1);
         }
         
         @media (max-width: 768px) {
@@ -90,7 +90,7 @@
 
     <div class="d-flex">
     <div id="sidebar-container" class="bg-primary">
-      <div class="logo"><h4 class="text-light font-weight-bold">Romar Natural</h4></div>
+      <div class="logo"><h4 class="text-light font-weight-bold">EZ</h4></div>
       <div class="menu">
         <a href="{% url 'dashboard' %}" class="d-block text-light p-3"><i class="icon ion-md-apps mr-2"></i>Panel</a>
         {% if es_admin %}
@@ -183,3 +183,6 @@
     {% block extra_js %}{% endblock %}
 </body>
 </html>
+
+
+

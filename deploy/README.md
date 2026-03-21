@@ -1,4 +1,4 @@
-# Deploy Django a Render con Docker
+# Deploy Django a Render con Docker y MariaDB
 
 ## Pasos para deployar:
 
@@ -11,11 +11,24 @@ pip freeze > requirements.txt
 ### 2. Subir a GitHub
 ```bash
 git add .
-git commit -m "Agregar configuración Docker para Render"
+git commit -m "Agregar configuración Docker para Render con MariaDB"
 git push origin main
 ```
 
-### 3. En Render.com
+### 3. Crear servicio MariaDB en Render (Opcional)
+
+Si aún no tienes una base de datos MariaDB:
+
+1. Ve a render.com → "New +" → "MySQL"
+2. Nombre: `proyecto-db`
+3. Copia las credenciales cuando se cree
+
+**O usa un proveedor externo como:**
+- **PlanetScale** (MySQL compatible)
+- **ClearDB** (MySQL en Heroku)
+- Tu propio servidor MariaDB
+
+### 4. En Render.com - Crear Web Service
 
 1. **Crear nuevo servicio:**
    - Ve a render.com → "New +" → "Web Service"
@@ -23,85 +36,79 @@ git push origin main
    - Selecciona la rama `main`
 
 2. **Configuración del servicio:**
-   - **Name:** tu-app-name
+   - **Name:** tu-app-django
    - **Environment:** Docker
    - **Build Command:** `docker build -f deploy/Dockerfile -t app .`
    - **Start Command:** `gunicorn --bind 0.0.0.0:8000 --workers 4 SGIEVpy.wsgi:application`
 
-3. **Variables de entorno (muy importante):**
-   ```
-   DEBUG=False
-   ALLOWED_HOSTS=tu-app.onrender.com
-   SECRET_KEY=tu-clave-secreta-muy-segura
-   DATABASE_URL=postgresql://usuario:contraseña@host:puerto/nombre_bd
-   ```
+3. **Variables de entorno (MUY IMPORTANTE):**
 
-4. **Plan:** Free (recomendado inicialmente) o superior si lo requieres
+   | Nombre | Valor |
+   |--------|-------|
+   | `DEBUG` | `False` |
+   | `SECRET_KEY` | Clickear "Generate" para autogenerar |
+   | `ALLOWED_HOSTS` | `tu-app.onrender.com` |
+   | `DB_ENGINE` | `django.db.backends.mysql` |
+   | `DB_NAME` | nombre de tu BD en MariaDB |
+   | `DB_USER` | usuario de MariaDB |
+   | `DB_PASSWORD` | contraseña de MariaDB |
+   | `DB_HOST` | host de tu MariaDB (ej: `db.onrender.com`) |
+   | `DB_PORT` | `3306` |
 
-### 4. Configurar settings.py para producción
+4. **Plan:** Free (recomendado inicialmente)
 
-```python
-# settings.py
-import os
-import dj_database_url
+### 5. Ejecutar migraciones después del deploy
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+Una vez que el servicio esté deployado, abre la consola de Render:
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
-
-SECRET_KEY = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
-
-# Base de datos
-if os.getenv('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv('DATABASE_URL'),
-            conn_max_age=600
-        )
-    }
-
-# Archivos estáticos
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/static/'
-
-# Seguridad en producción
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
-```
-
-### 5. En producción - Ejecutar migraciones:
-
-Una vez deployado en Render, ejecuta:
-```bash
-render-deploy: python manage.py migrate
-```
-
-O en la consola de Render:
 ```bash
 python manage.py migrate
+```
+
+### 6. Crear usuario administrador (Opcional)
+
+```bash
+python manage.py createsuperuser
+# o
+python crear_usuarios.py
 ```
 
 ## Notas importantes:
 
 - El `Dockerfile` está en la carpeta `deploy/`
+- MariaDB es compatible con MySQL en Django
 - Asegúrate de que `requirements.txt` esté actualizado
 - No subas `secrets` al repositorio (usa Environment Variables)
 - El archivo `.dockerignore` excluye archivos innecesarios
-- Para bases de datos MySQL, usa `dj_database_url` con `DATABASE_URL`
+- `whitenoise` maneja archivos estáticos en producción
 
 ## Para probar localmente con Docker:
 
 ```bash
-# Ir a la carpeta deploy
-cd deploy
-
 # Construir la imagen
-docker build -f Dockerfile -t mi-app:latest ..
+docker build -f deploy/Dockerfile -t mi-app:latest .
 
 # Ejecutar el contenedor
-docker run -p 8000:8000 mi-app:latest
+docker run -p 8000:8000 \
+  -e DB_NAME=proyecto \
+  -e DB_USER=root \
+  -e DB_PASSWORD="" \
+  -e DB_HOST=host.docker.internal \
+  mi-app:latest
 
 # O usar docker-compose
 docker-compose up --build
 ```
+
+## Troubleshooting:
+
+**Error: "Can't connect to MySQL server"**
+- Verifica las credenciales de BD en Environment Variables
+- Asegúrate de que el host de BD sea accesible desde Render
+
+**Error: "No such file or directory: 'deploy/Dockerfile'"**
+- Revisa que el `Dockerfile Path` sea: `deploy/Dockerfile`
+
+**Static files no se cargan**
+- Las dependencias de `whitenoise` deben estar en `requirements.txt`
+- Ejecuta `python manage.py collectstatic --noinput`

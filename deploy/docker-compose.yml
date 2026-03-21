@@ -8,12 +8,34 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=False
+      - DEBUG=True
       - ALLOWED_HOSTS=localhost,127.0.0.1
-      - SECRET_KEY=your-secret-key-here-change-in-production
+      - SECRET_KEY=dev-key-change-in-production
+      - DB_ENGINE=django.db.backends.mysql
+      - DB_NAME=proyecto
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
     volumes:
       - ../:/app
+    depends_on:
+      - db
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
              gunicorn --bind 0.0.0.0:8000 SGIEVpy.wsgi:application"
+
+  db:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=proyecto
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:

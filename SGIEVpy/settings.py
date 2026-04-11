@@ -202,6 +202,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'ez.application.mail@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # DEBE ESTAR EN RENDER ENV VARS
 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'EZ System <ez.application.mail@gmail.com>')
+ENVIAR_CORREOS = os.getenv('ENVIAR_CORREOS', 'False') == 'True'
 
 # Logging para debugging de emails
 LOGGING = {

@@ -2016,38 +2016,53 @@ from django.conf import settings
 @admin_required
 def usuarios_crear(request):
     """
-    Crear un nuevo usuario y enviarle notificación por correo.
+    Crear un nuevo usuario y enviarle notificación por correo (controlado por configuración).
     """
     if request.method == 'POST':
         form = UsuarioForm(request.POST)
+
         if form.is_valid():
+            usuario = form.save()
 
-            usuario = form.save()  # guardar usuario
-
-            # Enviar correo HTML con estilo al usuario (optimizado)
-            if usuario.correo:
+            # =========================================
+            # ENVÍO DE CORREO (DESACOPLADO DEL SISTEMA)
+            # =========================================
+            if settings.ENVIAR_CORREOS and usuario.correo:
                 try:
                     html_content = f"""
                     <html>
                     <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
                         <div style="max-width: 500px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            
                             <div style="background-color: #d32f2f; color: white; padding: 20px; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; text-align: center;">
                                 <h1 style="margin: 0; font-size: 24px;">¡Bienvenido a EZ!</h1>
                             </div>
+
                             <h2 style="color: #d32f2f;">Hola {usuario.nombre_completo},</h2>
+
                             <p>Tu usuario ha sido creado exitosamente en el sistema EZ.</p>
+
                             <div style="background-color: #fafafa; border-left: 4px solid #d32f2f; padding: 15px; margin: 20px 0;">
                                 <p><strong>Correo:</strong> {usuario.correo}</p>
                                 <p><strong>Tipo:</strong> {usuario.tipo_usu}</p>
                             </div>
-                            <p>Ya puedes <a href="https://ez-s171.onrender.com/login/" style="color: #d32f2f; text-decoration: none;"><strong>acceder al sistema</strong></a> con tus credenciales.</p>
+
+                            <p>
+                                Ya puedes 
+                                <a href="https://ez-s171.onrender.com/login/" style="color: #d32f2f; text-decoration: none;">
+                                    <strong>acceder al sistema</strong>
+                                </a>
+                            </p>
+
                             <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 12px;">
                                 Este es un correo automático. © 2026 EZ System.
                             </p>
+
                         </div>
                     </body>
                     </html>
                     """
+
                     email = EmailMessage(
                         subject='Tu usuario ha sido creado - EZ System',
                         body=html_content,
@@ -2056,11 +2071,19 @@ def usuarios_crear(request):
                     )
                     email.content_subtype = 'html'
                     email.send(fail_silently=False)
-                except Exception as e:
-                    messages.warning(request, f'Usuario creado, correo no enviado: {str(e)}')
 
+                except Exception as e:
+                    messages.warning(
+                        request,
+                        f'Usuario creado, pero el correo falló: {str(e)}'
+                    )
+
+            # =========================================
+            # RESPUESTA DEL SISTEMA
+            # =========================================
             messages.success(request, 'Usuario creado exitosamente')
             return redirect('usuarios_listar')
+
     else:
         form = UsuarioForm()
 
@@ -2329,13 +2352,12 @@ def ventas_limpiar_carrito(request):
     messages.success(request, 'Carrito vaciado')
     return redirect('ventas_crear')
 
-
 @transaction.atomic
 def procesar_venta(request):
     """
     Procesa la venta final con validación de abono mínimo y estado automático,
     descontando stock por lotes (FIFO) a partir del producto maestro.
-    Incluye datos de cliente y envío de correos con PDF adjunto.
+    Incluye datos de cliente y envío de correos con PDF adjunto (controlado por configuración).
     """
     logger = logging.getLogger('Sgiev.views')
     
@@ -2355,18 +2377,16 @@ def procesar_venta(request):
             valor_total = subtotal - descuento + iva
             abono = venta_form.cleaned_data['abono'] or Decimal('0')
 
-            # ===== VALIDACIÓN DE ABONO MÍNIMO =====
+            # ===== VALIDACIÓN DE ABONO =====
             abono_minimo = valor_total * Decimal('0.10')
-
             if abono > 0 and abono < abono_minimo:
                 messages.error(
                     request,
-                    f'El abono mínimo debe ser el 10% del total (${abono_minimo:,.0f}). '
-                    f'Si no desea abonar, deje el campo en 0.'
+                    f'El abono mínimo debe ser el 10% (${abono_minimo:,.0f}).'
                 )
                 return redirect('ventas_crear')
 
-            # ===== CALCULAR ESTADO DE PAGO AUTOMÁTICAMENTE =====
+            # ===== ESTADO DE PAGO =====
             if abono == 0:
                 estado_pago = 'pendiente'
             elif abono >= valor_total:
@@ -2391,7 +2411,7 @@ def procesar_venta(request):
 
             productos_stock_bajo = []
 
-            # ===== PROCESAR CADA PRODUCTO DEL CARRITO (FIFO POR LOTES) =====
+            # ===== PROCESAR PRODUCTOS =====
             for item in carrito:
                 producto_maestro = Producto.objects.get(id=item['producto_id'])
                 cantidad_a_vender = item['cantidad']
@@ -2402,8 +2422,7 @@ def procesar_venta(request):
                     activo=1
                 ).order_by('fecha_vencimiento', 'id')
 
-                stock_total_disponible = sum(lote.stock_actual for lote in lotes)
-                if stock_total_disponible < cantidad_a_vender:
+                if sum(l.stock_actual for l in lotes) < cantidad_a_vender:
                     raise Exception(f'Stock insuficiente para {producto_maestro.nombre_producto}')
 
                 Venta_has_producto.objects.create(
@@ -2443,8 +2462,7 @@ def procesar_venta(request):
                         valor_total=producto_maestro.precio_venta * tomar,
                         referencia_id=venta.id,
                         tipo_referencia='venta',
-                        observaciones=f'Venta #{venta.numero_factura} - Lote {lote.codigo_barras}',
-                        imagen_comprobante='',
+                        observaciones=f'Venta #{venta.numero_factura}',
                         usuarios_id_usuario=request.user,
                         producto_idproducto=lote
                     )
@@ -2455,184 +2473,79 @@ def procesar_venta(request):
             request.session['carrito_venta'] = []
             request.session.modified = True
 
-            # ===== GENERAR PDF EN MEMORIA =====
-            productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta).select_related('producto_idproducto')
-            
+            # ===== GENERAR PDF =====
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             elements = []
-
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                textColor=colors.HexColor('#d32f2f'),
-                alignment=TA_CENTER
-            )
 
-            elements.append(Paragraph("EZ SYSTEM", title_style))
-            elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
-            elements.append(Paragraph("Contacto: ez.application.mail@gmail.com", styles['Normal']))
-            elements.append(Spacer(1, 0.3 * inch))
-
-            elements.append(Paragraph(f"<b>FACTURA: {venta.numero_factura}</b>", styles['Heading2']))
-            elements.append(Paragraph(f"Fecha: {venta.fecha_factura.strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
-            elements.append(Paragraph(f"Vendedor: {venta.usuarios_id_usuario.nombre_completo}", styles['Normal']))
-
-            if venta.nombre_cliente or venta.correo_cliente or venta.direccion_cliente:
-                elements.append(Spacer(1, 0.2 * inch))
-                elements.append(Paragraph("<b>Datos del Cliente</b>", styles['Heading3']))
-                if venta.nombre_cliente:
-                    elements.append(Paragraph(f"Nombre: {venta.nombre_cliente}", styles['Normal']))
-                if venta.correo_cliente:
-                    elements.append(Paragraph(f"Correo: {venta.correo_cliente}", styles['Normal']))
-                if venta.telefono_cliente:
-                    elements.append(Paragraph(f"Teléfono: {venta.telefono_cliente}", styles['Normal']))
-                if venta.direccion_cliente:
-                    elements.append(Paragraph(f"Dirección: {venta.direccion_cliente}", styles['Normal']))
-
-            elements.append(Spacer(1, 0.3 * inch))
-
-            data = [['#', 'Producto', 'Cant.', 'Precio Unit.', 'Subtotal']]
-            for idx, item in enumerate(productos_venta, 1):
-                data.append([
-                    str(idx),
-                    item.producto_idproducto.nombre_producto[:30],
-                    str(item.cantidad),
-                    f"${item.valor_unitario:,.0f}",
-                    f"${item.subtotal_linea:,.0f}",
-                ])
-
-            table = Table(data, colWidths=[0.5 * inch, 3 * inch, 0.8 * inch, 1.2 * inch, 1.2 * inch])
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d32f2f')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ]))
-
-            elements.append(table)
-            elements.append(Spacer(1, 0.3 * inch))
-
-            totales_data = [
-                ['Subtotal:', f"${venta.subtotal:,.0f}"],
-                ['Descuento:', f"-${venta.descuento:,.0f}"],
-                ['IVA (19%):', f"${venta.iva:,.0f}"],
-                ['<b>TOTAL:</b>', f"<b>${venta.valor_total:,.0f}</b>"],
-            ]
-
-            if venta.abono > 0:
-                totales_data.append(['Abono:', f"${venta.abono:,.0f}"])
-                totales_data.append(['<b>Saldo Pendiente:</b>', f"<b>${venta.saldo_pendiente:,.0f}</b>"])
-
-            totales_table = Table(totales_data, colWidths=[3 * inch, 2 * inch])
-            totales_table.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, -1), (-1, -1), 14),
-                ('LINEABOVE', (0, -2), (-1, -2), 2, colors.black),
-            ]))
-
-            elements.append(totales_table)
-            elements.append(Spacer(1, 0.5 * inch))
-
-            elements.append(Paragraph(f"<b>Método de Pago:</b> {venta.get_metodo_pago_display()}", styles['Normal']))
-            elements.append(Paragraph(f"<b>Estado:</b> {venta.get_estado_pago_display()}", styles['Normal']))
-
-            if venta.observaciones:
-                elements.append(Spacer(1, 0.2 * inch))
-                elements.append(Paragraph(f"<b>Observaciones:</b> {venta.observaciones}", styles['Normal']))
-
-            elements.append(Spacer(1, 0.5 * inch))
-            elements.append(Paragraph("Gracias por su compra", styles['Normal']))
-
+            elements.append(Paragraph(f"Factura {venta.numero_factura}", styles['Heading2']))
+            elements.append(Paragraph(f"Total: ${venta.valor_total:,.0f}", styles['Normal']))
             doc.build(elements)
+
             pdf_content = buffer.getvalue()
             buffer.close()
 
-            # ===== ENVIAR CORREO AL CLIENTE =====
-            if venta.correo_cliente:
-                try:
-                    email_cliente = EmailMessage(
-                        subject=f'Venta registrada - {venta.numero_factura}',
-                        body=(
-                            f'Hola {venta.nombre_cliente},\n\n'
-                            f'Tu compra ha sido registrada exitosamente.\n'
-                            f'Factura: {venta.numero_factura}\n'
-                            f'Total: ${venta.valor_total:,.0f}\n\n'
-                            f'Pronto tu pedido entrará en proceso de envío.\n'
-                            f'Adjuntamos tu factura en formato PDF.\n\n'
-                            f'Gracias por tu compra.\n\n'
-                            f'EZ System'
-                        ),
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[venta.correo_cliente],
-                    )
-                    email_cliente.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_cliente.send(fail_silently=False)
-                    logger.info(f'✓ Correo enviado al cliente: {venta.correo_cliente}')
-                except Exception as e:
-                    logger.error(f'❌ Error al enviar correo al cliente: {str(e)}')
-                    messages.warning(request, f'Venta guardada pero no se pudo enviar correo al cliente: {str(e)}')
+            # =========================================
+            # ENVÍO DE CORREOS (DESACOPLADO)
+            # =========================================
+            if settings.ENVIAR_CORREOS:
 
-            # ===== ENVIAR CORREO AL VENDEDOR =====
-            if venta.usuarios_id_usuario.correo:
-                try:
-                    email_vendedor = EmailMessage(
-                        subject=f'Venta registrada exitosamente - {venta.numero_factura}',
-                        body=(
-                            f'Hola {venta.usuarios_id_usuario.nombre_completo},\n\n'
-                            f'La venta {venta.numero_factura} ha sido registrada exitosamente.\n'
-                            f'Cliente: {venta.nombre_cliente or "N/A"}\n'
-                            f'Total: ${venta.valor_total:,.0f}\n\n'
-                            f'Por favor, realiza la asignación del envío lo más pronto posible.\n'
-                            f'Adjuntamos la factura en formato PDF.\n\n'
-                            f'EZ System'
-                        ),
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[venta.usuarios_id_usuario.correo],
-                    )
-                    email_vendedor.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_vendedor.send(fail_silently=False)
-                    logger.info(f'✓ Correo enviado al vendedor: {venta.usuarios_id_usuario.correo}')
-                except Exception as e:
-                    logger.error(f'❌ Error al enviar correo al vendedor: {str(e)}')
-                    messages.warning(request, f'Venta guardada pero no se pudo enviar correo al vendedor: {str(e)}')
+                # CLIENTE
+                if venta.correo_cliente:
+                    try:
+                        email_cliente = EmailMessage(
+                            subject=f'Venta registrada - {venta.numero_factura}',
+                            body=f'Gracias por tu compra. Total: ${venta.valor_total:,.0f}',
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=[venta.correo_cliente],
+                        )
+                        email_cliente.attach(
+                            f'Factura_{venta.numero_factura}.pdf',
+                            pdf_content,
+                            'application/pdf'
+                        )
+                        email_cliente.send(fail_silently=True)
 
-            # ===== MENSAJES DE ÉXITO =====
-            estado_texto = {
-                'pendiente': 'PENDIENTE',
-                'parcial': 'PARCIAL',
-                'pagado': 'PAGADO'
-            }
+                    except Exception as e:
+                        logger.error(f'Error correo cliente: {str(e)}')
+
+                # VENDEDOR
+                if venta.usuarios_id_usuario.correo:
+                    try:
+                        email_vendedor = EmailMessage(
+                            subject=f'Venta registrada - {venta.numero_factura}',
+                            body=f'Se registró una venta por ${venta.valor_total:,.0f}',
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=[venta.usuarios_id_usuario.correo],
+                        )
+                        email_vendedor.attach(
+                            f'Factura_{venta.numero_factura}.pdf',
+                            pdf_content,
+                            'application/pdf'
+                        )
+                        email_vendedor.send(fail_silently=True)
+
+                    except Exception as e:
+                        logger.error(f'Error correo vendedor: {str(e)}')
+
+            # ===== MENSAJE FINAL =====
             messages.success(
                 request,
-                f'Venta {venta.numero_factura} registrada exitosamente. '
-                f'Estado: {estado_texto[estado_pago]}'
+                f'Venta {venta.numero_factura} registrada exitosamente'
             )
-
-            if productos_stock_bajo:
-                for prod in productos_stock_bajo:
-                    messages.warning(
-                        request,
-                        f'⚠️ ALERTA: {prod["nombre"]} tiene stock bajo. '
-                        f'Actual: {prod["stock_actual"]} | Mínimo: {prod["stock_minimo"]}'
-                    )
 
             return redirect('ventas_detalle', id=venta.id)
 
         except Exception as e:
-            messages.error(request, f'Error al procesar la venta: {str(e)}')
+            messages.error(request, f'Error: {str(e)}')
             return redirect('ventas_crear')
+
     else:
         for error in venta_form.errors.values():
             messages.error(request, error)
-        return redirect('ventas_crear')
+
+    return redirect('ventas_crear')
 
 @login_required(login_url='login')
 def ventas_detalle(request, id):
@@ -3074,7 +2987,7 @@ def envios_listar(request):
 @login_required(login_url='login')
 def envios_crear(request):
     """
-    Crear nuevo envío y notificar por correo
+    Crear nuevo envío (sin envío de correos)
     """
     logger = logging.getLogger('Sgiev.views')
     
@@ -3089,7 +3002,9 @@ def envios_crear(request):
             
             # ===== GENERAR PDF DE LA FACTURA =====
             venta = envio.venta_idfactura
-            productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta).select_related('producto_idproducto')
+            productos_venta = Venta_has_producto.objects.filter(
+                venta_idfactura=venta
+            ).select_related('producto_idproducto')
             
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -3188,73 +3103,14 @@ def envios_crear(request):
             pdf_content = buffer.getvalue()
             buffer.close()
 
-            # Mapeo de estados a texto amigable
-            estados_texto = {
-                'pendiente': 'Pendiente de envío',
-                'en_transito': 'En tránsito',
-                'entregado': 'Entregado',
-                'devuelto': 'Devuelto'
-            }
-            estado_display = estados_texto.get(envio.estado_envio, envio.estado_envio)
-
-            # ===== ENVIAR CORREO AL CLIENTE =====
-            if venta.correo_cliente:
-                try:
-                    email_cliente = EmailMessage(
-                        subject=f'Estado de tu envío - {venta.numero_factura}',
-                        body=(
-                            f'Hola {venta.nombre_cliente},\n\n'
-                            f'Tu pedido ha sido registrado para envío.\n\n'
-                            f'Estado actual: {estado_display}\n'
-                            f'Factura: {venta.numero_factura}\n'
-                            f'Fecha de envío: {envio.fecha_envio.strftime("%d/%m/%Y")}\n'
-                            f'Fecha estimada de entrega: {envio.fecha_entrega.strftime("%d/%m/%Y")}\n'
-                            f'Dirección de entrega: {envio.direccion_envio}\n'
-                            f'Empresa de mensajería: {envio.fk_mensajeria.nombre_mensajeria}\n\n'
-                            f'Adjuntamos tu factura en formato PDF.\n\n'
-                            f'Gracias por tu preferencia.\n\n'
-                            f'EZ System'
-                        ),
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[venta.correo_cliente],
-                    )
-                    email_cliente.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_cliente.send(fail_silently=True)
-                except Exception:
-                    pass
-
-            # ===== ENVIAR CORREO AL RESPONSABLE DEL ENVÍO =====
-            if envio.usuarios_id_usuario.correo:
-                try:
-                    email_responsable = EmailMessage(
-                        subject=f'Envío asignado - {venta.numero_factura}',
-                        body=(
-                            f'Hola {envio.usuarios_id_usuario.nombre_completo},\n\n'
-                            f'Se ha registrado un nuevo envío bajo tu responsabilidad.\n\n'
-                            f'Factura: {venta.numero_factura}\n'
-                            f'Cliente: {venta.nombre_cliente or "N/A"}\n'
-                            f'Estado actual: {estado_display}\n'
-                            f'Fecha de envío: {envio.fecha_envio.strftime("%d/%m/%Y")}\n'
-                            f'Fecha estimada de entrega: {envio.fecha_entrega.strftime("%d/%m/%Y")}\n'
-                            f'Dirección: {envio.direccion_envio}\n\n'
-                            f'RECORDATORIO: Por favor actualiza el estado del envío según avance el proceso.\n'
-                            f'Accede al sistema para registrar novedades o cambios de estado.\n\n'
-                            f'Adjuntamos la factura en formato PDF.\n\n'
-                            f'EZ System'
-                        ),
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[envio.usuarios_id_usuario.correo],
-                    )
-                    email_responsable.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                    email_responsable.send(fail_silently=False)
-                except Exception as e:
-                    messages.warning(request, f'Envío registrado pero no se pudo notificar al responsable: {str(e)}')
+            # (PDF generado pero NO se envía por correo)
 
             messages.success(
                 request,
                 f'Envío registrado exitosamente para la venta {envio.venta_idfactura.numero_factura}'
             )
             return redirect('envios_detalle', id=envio.id)
+
     else:
         if venta_id:
             try:
@@ -3286,217 +3142,164 @@ def envios_crear(request):
     }
 
     return render(request, 'envios/crear.html', context)
-
 @login_required(login_url='login')
-def envios_editar(request, id):
+def envios_crear(request):
     """
-    Editar envío existente y notificar cambios
-    Admin: puede editar todo
-    Operario: solo puede editar estado y novedades
+    Crear nuevo envío (sin envío de correos)
     """
     logger = logging.getLogger('Sgiev.views')
     
-    envio = get_object_or_404(Envio, pk=id)
-    es_admin = request.user.tipo_usu == 'administrador'
+    venta_id = request.GET.get('venta_id', None)
 
     if request.method == 'POST':
-        # Guardar estado anterior para detectar cambios
-        estado_anterior = envio.estado_envio
-        
-        if es_admin:
-            form = EnvioForm(request.POST, instance=envio)
-        else:
-            form = EnvioEditarOperarioForm(request.POST, instance=envio)
-
+        form = EnvioForm(request.POST)
         if form.is_valid():
-            envio = form.save()
+            envio = form.save(commit=False)
+            envio.usuarios_id_usuario = request.user
+            envio.save()
             
-            # Detectar si cambió el estado
-            estado_cambio = estado_anterior != envio.estado_envio
+            # ===== GENERAR PDF DE LA FACTURA =====
+            venta = envio.venta_idfactura
+            productos_venta = Venta_has_producto.objects.filter(
+                venta_idfactura=venta
+            ).select_related('producto_idproducto')
             
-            if estado_cambio:
-                # ===== GENERAR PDF DE LA FACTURA =====
-                venta = envio.venta_idfactura
-                productos_venta = Venta_has_producto.objects.filter(venta_idfactura=venta)
-                
-                buffer = BytesIO()
-                doc = SimpleDocTemplate(buffer, pagesize=letter)
-                elements = []
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter)
+            elements = []
 
-                styles = getSampleStyleSheet()
-                title_style = ParagraphStyle(
-                    'CustomTitle',
-                    parent=styles['Heading1'],
-                    fontSize=24,
-                    textColor=colors.HexColor('#d32f2f'),
-                    alignment=TA_CENTER
-                )
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                textColor=colors.HexColor('#d32f2f'),
+                alignment=TA_CENTER
+            )
 
-                elements.append(Paragraph("EZ SYSTEM", title_style))
-                elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
-                elements.append(Paragraph("Contacto: ez.application.mail@gmail.com", styles['Normal']))
-                elements.append(Spacer(1, 0.3 * inch))
+            elements.append(Paragraph("EZ SYSTEM", title_style))
+            elements.append(Paragraph("Sistema de Gestión Integrado", styles['Normal']))
+            elements.append(Paragraph("Contacto: ez.application.mail@gmail.com", styles['Normal']))
+            elements.append(Spacer(1, 0.3 * inch))
 
-                elements.append(Paragraph(f"<b>FACTURA: {venta.numero_factura}</b>", styles['Heading2']))
-                elements.append(Paragraph(f"Fecha: {venta.fecha_factura.strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
-                elements.append(Paragraph(f"Vendedor: {venta.usuarios_id_usuario.nombre_completo}", styles['Normal']))
+            elements.append(Paragraph(f"<b>FACTURA: {venta.numero_factura}</b>", styles['Heading2']))
+            elements.append(Paragraph(f"Fecha: {venta.fecha_factura.strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+            elements.append(Paragraph(f"Vendedor: {venta.usuarios_id_usuario.nombre_completo}", styles['Normal']))
 
-                if venta.nombre_cliente or venta.correo_cliente or venta.direccion_cliente:
-                    elements.append(Spacer(1, 0.2 * inch))
-                    elements.append(Paragraph("<b>Datos del Cliente</b>", styles['Heading3']))
-                    if venta.nombre_cliente:
-                        elements.append(Paragraph(f"Nombre: {venta.nombre_cliente}", styles['Normal']))
-                    if venta.correo_cliente:
-                        elements.append(Paragraph(f"Correo: {venta.correo_cliente}", styles['Normal']))
-                    if venta.telefono_cliente:
-                        elements.append(Paragraph(f"Teléfono: {venta.telefono_cliente}", styles['Normal']))
-                    if venta.direccion_cliente:
-                        elements.append(Paragraph(f"Dirección: {venta.direccion_cliente}", styles['Normal']))
-
-                elements.append(Spacer(1, 0.3 * inch))
-
-                data = [['#', 'Producto', 'Cant.', 'Precio Unit.', 'Subtotal']]
-                for idx, item in enumerate(productos_venta, 1):
-                    data.append([
-                        str(idx),
-                        item.producto_idproducto.nombre_producto[:30],
-                        str(item.cantidad),
-                        f"${item.valor_unitario:,.0f}",
-                        f"${item.subtotal_linea:,.0f}",
-                    ])
-
-                table = Table(data, colWidths=[0.5 * inch, 3 * inch, 0.8 * inch, 1.2 * inch, 1.2 * inch])
-                table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d32f2f')),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 12),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ]))
-
-                elements.append(table)
-                elements.append(Spacer(1, 0.3 * inch))
-
-                totales_data = [
-                    ['Subtotal:', f"${venta.subtotal:,.0f}"],
-                    ['Descuento:', f"-${venta.descuento:,.0f}"],
-                    ['IVA (19%):', f"${venta.iva:,.0f}"],
-                    ['<b>TOTAL:</b>', f"<b>${venta.valor_total:,.0f}</b>"],
-                ]
-
-                if venta.abono > 0:
-                    totales_data.append(['Abono:', f"${venta.abono:,.0f}"])
-                    totales_data.append(['<b>Saldo Pendiente:</b>', f"<b>${venta.saldo_pendiente:,.0f}</b>"])
-
-                totales_table = Table(totales_data, colWidths=[3 * inch, 2 * inch])
-                totales_table.setStyle(TableStyle([
-                    ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-                    ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, -1), (-1, -1), 14),
-                    ('LINEABOVE', (0, -2), (-1, -2), 2, colors.black),
-                ]))
-
-                elements.append(totales_table)
-                elements.append(Spacer(1, 0.5 * inch))
-
-                elements.append(Paragraph(f"<b>Método de Pago:</b> {venta.get_metodo_pago_display()}", styles['Normal']))
-                elements.append(Paragraph(f"<b>Estado:</b> {venta.get_estado_pago_display()}", styles['Normal']))
-
-                if venta.observaciones:
-                    elements.append(Spacer(1, 0.2 * inch))
-                    elements.append(Paragraph(f"<b>Observaciones:</b> {venta.observaciones}", styles['Normal']))
-
-                elements.append(Spacer(1, 0.5 * inch))
-                elements.append(Paragraph("Gracias por su compra", styles['Normal']))
-
-                doc.build(elements)
-                pdf_content = buffer.getvalue()
-                buffer.close()
-
-                # Mapeo de estados
-                estados_texto = {
-                    'pendiente': 'Pendiente de envío',
-                    'en_transito': 'En tránsito',
-                    'entregado': 'Entregado',
-                    'devuelto': 'Devuelto'
-                }
-                estado_display = estados_texto.get(envio.estado_envio, envio.estado_envio)
-
-                # ===== ENVIAR CORREO AL CLIENTE =====
+            if venta.nombre_cliente or venta.correo_cliente or venta.direccion_cliente:
+                elements.append(Spacer(1, 0.2 * inch))
+                elements.append(Paragraph("<b>Datos del Cliente</b>", styles['Heading3']))
+                if venta.nombre_cliente:
+                    elements.append(Paragraph(f"Nombre: {venta.nombre_cliente}", styles['Normal']))
                 if venta.correo_cliente:
-                    try:
-                        email_cliente = EmailMessage(
-                            subject=f'Actualización de tu envío - {venta.numero_factura}',
-                            body=(
-                                f'Hola {venta.nombre_cliente},\n\n'
-                                f'El estado de tu envío ha sido actualizado.\n\n'
-                                f'Estado actual: {estado_display}\n'
-                                f'Factura: {venta.numero_factura}\n'
-                                f'Fecha estimada de entrega: {envio.fecha_entrega.strftime("%d/%m/%Y")}\n'
-                                f'Dirección de entrega: {envio.direccion_envio}\n\n'
-                                f'{f"Novedades: {envio.novedades}" if envio.novedades else ""}\n\n'
-                                f'Adjuntamos tu factura en formato PDF.\n\n'
-                                f'Gracias por tu preferencia.\n\n'
-                                f'EZ System'
-                            ),
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            to=[venta.correo_cliente],
-                        )
-                        email_cliente.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                        email_cliente.send(fail_silently=False)
-                    except Exception as e:
-                        messages.warning(request, f'Envío actualizado pero no se pudo notificar al cliente: {str(e)}')
+                    elements.append(Paragraph(f"Correo: {venta.correo_cliente}", styles['Normal']))
+                if venta.telefono_cliente:
+                    elements.append(Paragraph(f"Teléfono: {venta.telefono_cliente}", styles['Normal']))
+                if venta.direccion_cliente:
+                    elements.append(Paragraph(f"Dirección: {venta.direccion_cliente}", styles['Normal']))
 
-                # ===== ENVIAR CORREO AL RESPONSABLE DEL ENVÍO =====
-                if envio.usuarios_id_usuario.correo:
-                    try:
-                        email_responsable = EmailMessage(
-                            subject=f'Estado actualizado - {venta.numero_factura}',
-                            body=(
-                                f'Hola {envio.usuarios_id_usuario.nombre_completo},\n\n'
-                                f'El estado del envío ha sido actualizado.\n\n'
-                                f'Factura: {venta.numero_factura}\n'
-                                f'Cliente: {venta.nombre_cliente or "N/A"}\n'
-                                f'Estado actual: {estado_display}\n'
-                                f'Fecha estimada de entrega: {envio.fecha_entrega.strftime("%d/%m/%Y")}\n\n'
-                                f'RECORDATORIO: Mantén actualizado el estado y registra cualquier novedad.\n\n'
-                                f'Adjuntamos la factura en formato PDF.\n\n'
-                                f'EZ System'
-                            ),
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            to=[envio.usuarios_id_usuario.correo],
-                        )
-                        email_responsable.attach(f'Factura_{venta.numero_factura}.pdf', pdf_content, 'application/pdf')
-                        email_responsable.send(fail_silently=True)
-                    except Exception:
-                        pass
+            elements.append(Spacer(1, 0.3 * inch))
 
-            messages.success(request, 'Envío actualizado exitosamente')
+            data = [['#', 'Producto', 'Cant.', 'Precio Unit.', 'Subtotal']]
+            for idx, item in enumerate(productos_venta, 1):
+                data.append([
+                    str(idx),
+                    item.producto_idproducto.nombre_producto[:30],
+                    str(item.cantidad),
+                    f"${item.valor_unitario:,.0f}",
+                    f"${item.subtotal_linea:,.0f}",
+                ])
+
+            table = Table(data, colWidths=[0.5 * inch, 3 * inch, 0.8 * inch, 1.2 * inch, 1.2 * inch])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d32f2f')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+
+            elements.append(table)
+            elements.append(Spacer(1, 0.3 * inch))
+
+            totales_data = [
+                ['Subtotal:', f"${venta.subtotal:,.0f}"],
+                ['Descuento:', f"-${venta.descuento:,.0f}"],
+                ['IVA (19%):', f"${venta.iva:,.0f}"],
+                ['<b>TOTAL:</b>', f"<b>${venta.valor_total:,.0f}</b>"],
+            ]
+
+            if venta.abono > 0:
+                totales_data.append(['Abono:', f"${venta.abono:,.0f}"])
+                totales_data.append(['<b>Saldo Pendiente:</b>', f"<b>${venta.saldo_pendiente:,.0f}</b>"])
+
+            totales_table = Table(totales_data, colWidths=[3 * inch, 2 * inch])
+            totales_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, -1), (-1, -1), 14),
+                ('LINEABOVE', (0, -2), (-1, -2), 2, colors.black),
+            ]))
+
+            elements.append(totales_table)
+            elements.append(Spacer(1, 0.5 * inch))
+
+            elements.append(Paragraph(f"<b>Método de Pago:</b> {venta.get_metodo_pago_display()}", styles['Normal']))
+            elements.append(Paragraph(f"<b>Estado:</b> {venta.get_estado_pago_display()}", styles['Normal']))
+
+            if venta.observaciones:
+                elements.append(Spacer(1, 0.2 * inch))
+                elements.append(Paragraph(f"<b>Observaciones:</b> {venta.observaciones}", styles['Normal']))
+
+            elements.append(Spacer(1, 0.5 * inch))
+            elements.append(Paragraph("Gracias por su compra", styles['Normal']))
+
+            doc.build(elements)
+            pdf_content = buffer.getvalue()
+            buffer.close()
+
+            # (PDF generado pero NO se envía por correo)
+
+            messages.success(
+                request,
+                f'Envío registrado exitosamente para la venta {envio.venta_idfactura.numero_factura}'
+            )
             return redirect('envios_detalle', id=envio.id)
-    else:
-        if es_admin:
-            initial_data = {}
-            if not envio.direccion_envio and envio.venta_idfactura and envio.venta_idfactura.direccion_cliente:
-                initial_data['direccion_envio'] = envio.venta_idfactura.direccion_cliente
 
-            form = EnvioForm(instance=envio, initial=initial_data)
+    else:
+        if venta_id:
+            try:
+                venta = Venta.objects.get(id=venta_id)
+
+                if Envio.objects.filter(venta_idfactura=venta).exists():
+                    messages.warning(
+                        request,
+                        f'La venta {venta.numero_factura} ya tiene un envío asociado.'
+                    )
+                    return redirect('ventas_listar')
+
+                initial_data = {
+                    'venta_idfactura': venta,
+                    'direccion_envio': venta.direccion_cliente or '',
+                }
+                form = EnvioForm(initial=initial_data)
+            except Venta.DoesNotExist:
+                messages.error(request, 'Venta no encontrada')
+                form = EnvioForm()
         else:
-            form = EnvioEditarOperarioForm(instance=envio)
+            form = EnvioForm()
 
     context = {
         'form': form,
-        'titulo': 'Editar Envío',
-        'envio': envio,
+        'titulo': 'Registrar Nuevo Envío',
         'usuario': request.user,
-        'es_admin': es_admin,
-        'solo_estado': not es_admin,
+        'es_admin': request.user.tipo_usu == 'administrador',
     }
 
-    return render(request, 'envios/editar.html', context)
-
+    return render(request, 'envios/crear.html', context)
 @admin_required
 def envios_eliminar(request, id):
     """

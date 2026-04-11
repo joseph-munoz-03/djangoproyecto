@@ -1,33 +1,37 @@
 FROM python:3.12-slim
 
-# Establecer variables de entorno
+# Variables de entorno
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     DJANGO_SETTINGS_MODULE=SGIEVpy.settings
 
-# Establecer el directorio de trabajo
+# Directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema para PostgreSQL
+# Dependencias del sistema
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements.txt
+# Copiar requirements
 COPY requirements.txt .
 
-# Instalar dependencias de Python
+# Instalar dependencias Python
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Copiar el proyecto
+# Copiar proyecto
 COPY . .
 
-# Crear directorio para archivos estáticos
+# Carpeta de estáticos
 RUN mkdir -p staticfiles
 
-# Comando de inicio
-CMD bash -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python crear_usuarios.py && gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --worker-class sync SGIEVpy.wsgi:application"
-
-# No ejecutar collectstatic en build time (requiere BD)
+# 🚀 Comando de inicio (IMPORTANTE)
+CMD bash -c "\
+python manage.py migrate --noinput && \
+python manage.py collectstatic --noinput && \
+python crear_usuarios.py && \
+python crear_ventas.py && \
+gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --worker-class sync SGIEVpy.wsgi:application\
+"

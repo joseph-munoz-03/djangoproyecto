@@ -453,6 +453,7 @@ def list_producto(request):
     return render(request, 'producto/index.html', data)
 
 # ===== NUEVA VISTA: Editar Producto Maestro (con precio de venta) =====
+@admin_required
 @login_required
 def editar_producto_maestro(request, id):
     """
@@ -587,9 +588,13 @@ def detalle_producto_modal(request, producto_id):
         'lotes': todos_los_lotes_del_producto,
         'stock_total': stock_total,
         'movimientos': movimientos_producto,
+        'usuario': request.user,
+        'es_admin': request.user.tipo_usu == 'administrador',
     }
 
     return render(request, 'producto/detalle_producto_modal_content.html', context)
+
+@admin_required
 @login_required
 def registro_producto(request):
     usuario = request.user  
@@ -699,6 +704,7 @@ def pre_editar_producto(request, id):
     return render(request, 'producto/editar_lote.html', data)
 
 
+@admin_required
 @login_required
 def editar_producto(request, id):
     """
@@ -911,6 +917,8 @@ def generar_reporte_productos(request):
     return HttpResponse("Formato de reporte no válido.", status=400)
 
 
+@admin_required
+@login_required
 def registrar_salida_inventario_ajuste(request):
     if request.method == "POST":
         

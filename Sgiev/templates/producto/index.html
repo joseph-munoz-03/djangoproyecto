@@ -149,12 +149,14 @@
                     <h2 class="font-weight-bold text-danger">Gestión de Inventario</h2>
                     
                     <div class="d-flex">
+                        {% if es_admin %}
                         <a class="btn btn-success mr-2" href="{% url 'registro_producto' %}">
                             Nuevo Producto
                         </a>
                         <button class="btn btn-danger mr-2" data-toggle="modal" data-target="#SalidaInventarioModal">
                             Reportar salida
                         </button>
+                        {% endif %}
                         <button class="btn btn-info" data-toggle="modal" data-target="#ReporteProductosModal">
                             <i class="icon ion-md-document"></i> Generar Reporte
                         </button>
@@ -223,11 +225,13 @@
                                                 <i class="icon ion-md-eye"></i> Lotes
                                             </button>
                                             
+                                            {% if es_admin %}
                                             <a href="{% url 'editar_producto_maestro' producto.id %}" 
                                                class="btn btn-sm btn-warning" 
                                                title="Editar Producto y Precio de Venta">
                                                 <i class="icon ion-md-pricetag"></i> Editar Precio
                                             </a>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}

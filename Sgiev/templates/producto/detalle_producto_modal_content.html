@@ -49,6 +49,7 @@
                     </td>
                     <td>$ {{ lote.precio_compra|floatformat:2 }}</td>
                     <td>
+                        {% if es_admin %}
                         <a href="{% url 'pre_editar_producto' lote.id %}" 
                            class="btn btn-warning btn-sm" 
                            title="Editar Stock del Lote">
@@ -61,6 +62,9 @@
                            onclick="return confirm('¿Estás SEGURO de eliminar el LOTE {{ lote.codigo_barras }}?');">
                             <i class="icon ion-md-trash"></i>
                         </a>
+                        {% else %}
+                        <span class="badge badge-secondary">Solo lectura</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

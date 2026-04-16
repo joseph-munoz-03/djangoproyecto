@@ -300,6 +300,8 @@ def list_categoria(request):
 
 
 
+@admin_required
+@admin_required
 def registro_categoria(request):
     if request.method == "POST":
         nombre = request.POST.get('nombreCat')
@@ -327,6 +329,7 @@ def registro_categoria(request):
     })
 
 
+@admin_required
 def pre_editar_categoria(request, id):
     categoria = Categoria.objects.get(id=id)
 
@@ -344,6 +347,7 @@ def pre_editar_categoria(request, id):
 
 
 
+@admin_required
 def editar_categoria(request, id):
     categoria = Categoria.objects.get(id=id)
 
@@ -359,9 +363,11 @@ def editar_categoria(request, id):
 
 
 
+@admin_required
 def eliminar_categoria(request, id):
     categoria = Categoria.objects.get(id=id)
-    categoria.delete()
+    categoria.activo = 0  # Cambiar a inactivo en lugar de eliminar
+    categoria.save()
     return redirect('list_categoria')
 
 #PRODUCTOS
@@ -1731,6 +1737,7 @@ def listar_proveedores(request):
     })
 
 
+@admin_required
 @login_required
 def registrar_proveedor(request):
     # ⬇️ Se obtiene el usuario logueado para poder mostrar su info en la plantilla
@@ -1774,6 +1781,7 @@ def registrar_proveedor(request):
     })
 
 
+@admin_required
 @login_required
 def editar_proveedor(request, id):
     proveedor = get_object_or_404(Proveedor, id=id)
@@ -1800,10 +1808,12 @@ def editar_proveedor(request, id):
     })
 
 
+@admin_required
 @login_required
 def eliminar_proveedor(request, id):
     proveedor = get_object_or_404(Proveedor, id=id)
-    proveedor.delete()
+    proveedor.activo = 0  # Cambiar a inactivo en lugar de eliminar
+    proveedor.save()
     return redirect('listar_proveedores')
 
 @login_required(login_url='login')
@@ -3259,6 +3269,11 @@ def envios_crear(request):
         if venta_id:
             try:
                 venta = Venta.objects.get(id=venta_id)
+                
+                # Bloquear si es operario y la venta no es suya
+                if request.user.tipo_usu != 'administrador' and venta.usuarios_id_usuario != request.user:
+                    messages.error(request, 'No tienes permiso para crear envíos para ventas hechas por otros usuarios')
+                    return redirect('envios_listar')
 
                 if Envio.objects.filter(venta_idfactura=venta).exists():
                     messages.warning(
@@ -3277,6 +3292,19 @@ def envios_crear(request):
                 form = EnvioForm()
         else:
             form = EnvioForm()
+        
+        # Filtrar ventas disponibles según el rol del usuario
+        if request.user.tipo_usu != 'administrador':
+            # Los operarios solo ven sus propias ventas que no tienen envío
+            form.fields['venta_idfactura'].queryset = Venta.objects.filter(
+                usuarios_id_usuario=request.user,
+                envio__isnull=True
+            ).select_related('usuarios_id_usuario')
+        else:
+            # Los admin ven todas las ventas sin envío
+            form.fields['venta_idfactura'].queryset = Venta.objects.filter(
+                envio__isnull=True
+            ).select_related('usuarios_id_usuario')
 
     context = {
         'form': form,

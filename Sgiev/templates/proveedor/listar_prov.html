@@ -16,9 +16,11 @@
 
         <div class="col-md-6 text-right d-flex justify-content-end align-items-center">
 
+    {% if es_admin %}
     <a href="{% url 'registrar_proveedor' %}" class="btn btn-success btn-compact mr-2">
         <i class="icon ion-md-add-circle"></i> Nuevo Proveedor
     </a>
+    {% endif %}
 
     <a href="{% url 'listar_compras' %}" class="btn btn-primary btn-compact mr-2">
         <i class="icon ion-md-list"></i> Historial de Compras
@@ -120,20 +122,24 @@
 
                             <td class="text-center">
                                 <div class="btn-group">
+                                    {% if es_admin %}
                                     <a href="{% url 'editar_proveedor' p.id %}" class="btn btn-sm btn-warning" title="Editar">
                                         <i class="icon ion-md-create"></i>
                                     </a>
+                                    {% endif %}
 
                                     <a href="{% url 'crear_compra_proveedor' p.id %}" class="btn btn-sm btn-info" title="Compra">
                                         <i class="icon ion-md-cart"></i>
                                     </a>
 
+                                    {% if es_admin %}
                                     <a href="{% url 'eliminar_proveedor' p.id %}"
                                        class="btn btn-sm btn-danger"
                                        onclick="return confirm('¿Seguro que deseas eliminar este proveedor?');"
                                        title="Eliminar">
                                         <i class="icon ion-md-trash"></i>
                                     </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

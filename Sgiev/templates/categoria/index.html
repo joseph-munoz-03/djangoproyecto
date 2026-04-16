@@ -15,9 +15,11 @@
         </div>
 
         <div class="col-md-6 text-right">
+            {% if es_admin %}
             <a href="{% url 'registro_categoria' %}" class="btn btn-success">
                 <i class="icon ion-md-add-circle"></i> Nueva Categoría
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -80,6 +82,7 @@
                             </td>
 
                             <td class="text-center">
+                                {% if es_admin %}
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'pre_editar_categoria' cat.id %}"
                                        class="btn btn-sm btn-warning"
@@ -94,6 +97,9 @@
                                         <i class="icon ion-md-trash"></i>
                                     </a>
                                 </div>
+                                {% else %}
+                                <span class="badge badge-secondary">Solo lectura</span>
+                                {% endif %}
                             </td>
                         </tr>
 
